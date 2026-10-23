@@ -103,7 +103,7 @@ The element is a block, 16:10 by default. Give it any width and height and the p
 | --- | --- |
 | `--unfold-metal` | Colour of the frame and buttons. Overrides the finish. |
 | `--unfold-back` | Colour of the back glass and camera plateau. |
-| `--unfold-hinge`, `--unfold-ring` | Colours of the hinge cover and the lens rings. |
+| `--unfold-hinge`, `--unfold-antenna` | Colours of the hinge cover and the antenna lines. |
 | `--unfold-shadow` | How dark the shadow is, 0 to 1. Default 0.3. |
 | `::part()` | `stage`, `shadow`, `screen`, `back-glass` and `camera`. |
 
@@ -114,7 +114,7 @@ Both are plain objects. Add one, then use it by name.
 ```js
 import { addFinish, POSTURES } from './unfold.js';
 
-addFinish('sage', { metal: '#8d9a8a', back: '#b9c4b4', hinge: '#7f8a7c', ring: '#9aa697' });
+addFinish('sage', { metal: '#a9b7a5', back: '#c3cdbf', hinge: '#97a393', antenna: 'rgba(60, 70, 58, .4)' });
 POSTURES.reading = { fold: 120, roll: 0, anchor: 0.5, lean: 0, yaw: -20, pitch: 10 };
 ```
 
@@ -126,17 +126,23 @@ In a posture, `anchor` and `lean` say which part keeps still as it folds. The wh
 
 ## How it is built
 
-The body follows Apple's published dimensions: 84.1 by 117.8 by 11.3 mm closed and 164.6 by 117.8 mm open. The camera plateau, lenses, mic, flash, buttons and the cover screen's hole punch are measured from Apple's product photos. All of it is in `SPEC` at the top of `unfold.js`, in millimetres.
+The body follows Apple's published dimensions: 164.6 by 117.8 by 5.2 mm open, 84.1 by 117.8 by 11.3 mm closed. Everything else is measured from Apple's own 3D model of the phone and its spec drawings:
+- the continuous corners, and the band's rounded profile, 0.7 mm round the inner screen and rolling 1.3 mm into the back
+- the hinge cover, 1.8 mm out of the side when closed, and the 0.9 mm gap between the halves
+- the camera plateau, 3.6 mm proud, its two raised lens rings, mic and flash
+- the buttons, the antenna lines, the speaker holes, the microphones and USB-C, and the cover screen's hole punch
 
-Every part is a plain element with a CSS 3D transform: the faces and a polished band of strips for each half, the hinge cover, the buttons, and the camera plateau and lenses standing proud of the back. The transforms are worked out in JavaScript whenever the pose changes. All the pieces sit side by side in one 3D container rather than nested by half, because Safari stops drawing the children of a 3D container once it turns edge-on.
+It is all in `SPEC` at the top of `unfold.js`, in millimetres.
 
-The two halves turn about the line where the two sides of the inner screen meet, so there is never a gap in the picture at the fold. Each half is 5.65 mm deep so the phone closes to its real 11.3 mm; the real one is a little thinner open, where its hinge takes up the difference.
+The phone is about three hundred flat polygons: the band's rounded profile is lofted from rings, and so are the camera and the lenses. Each polygon is a plain element with one `matrix3d`, worked out in JavaScript whenever the pose changes. They all sit side by side in one 3D container rather than nested, because Safari stops drawing the children of a 3D container once it turns edge-on. Faces that point away are hidden by hand, using the real eye position, and every surface is lit from a fixed studio: the titanium reflects it, the frosted glass scatters it.
 
-Faces that point away from the viewer are hidden by hand, using the real eye position, instead of with `backface-visibility`. Every surface is lit from a fixed light each frame, and a soft glare slides across the glass as it turns.
+The halves turn about a line half the closed gap in front of the inner screen, just as the real hinge does, and both halves of the screen run on a little past the fold so the picture never breaks. As it opens, the inner screen wakes dark and soft and clears, the hidden half last, and a soft band of light gathers along the fold.
+
+Each phone builds itself when it first comes near the screen and stops drawing while it is scrolled away.
 
 ## Browsers
 
-Tested in current Chrome and Safari, on desktop and on phones. On a touchscreen a sideways drag turns it and a vertical swipe still scrolls the page.
+Tested in current Chrome and Safari, on desktop and on phones, at 60 frames a second. On a touchscreen a sideways drag turns it and a vertical swipe still scrolls the page.
 
 ## License
 
