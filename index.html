@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unfold: a foldable phone in HTML and CSS</title>
+<meta name="description" content="A foldable phone made of HTML and CSS 3D. Put your own screens on it, then open it, close it and turn it around. One file, no dependencies, MIT licensed.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6' width='12.6' height='20' rx='3' fill='%23111'/%3E%3Crect x='16.4' y='6' width='12.6' height='20' rx='3' fill='%23555'/%3E%3C/svg%3E">
+<link rel="modulepreload" href="unfold.js">
+<style>
+:root {
+  --bg: #ececef; --ink: #0f1012; --muted: #5f636b; --faint: #8a8e96; --line: rgba(15, 16, 18, .1);
+  --card: #f6f6f8; --code: #f6f6f8; --thumb: #0f1012;
+  --c-tag: #a2402b; --c-attr: #5146ad; --c-str: #2c6d4c; --c-com: #8a8e96;
+  --gutter: max(16px, env(safe-area-inset-left)); --gutter-r: max(16px, env(safe-area-inset-right));
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0e10; --ink: #f1f2f4; --muted: #a2a6ad; --faint: #6e727a; --line: rgba(255, 255, 255, .1);
+    --card: #16171a; --code: #131417; --thumb: #f1f2f4;
+    --c-tag: #f2a690; --c-attr: #bab1ff; --c-str: #93d4b0; --c-com: #6e727a;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: inherit; }
+code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.mark { font-weight: 700; letter-spacing: -0.02em; text-decoration: none; font-size: 18px; }
+.top nav { display: flex; gap: 22px; font-size: 15px; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--ink); }
+
+/* Hero */
+.hero { text-align: center; padding-top: clamp(16px, 4vw, 40px); }
+h1 { margin: 0; font-size: clamp(52px, 8vw, 88px); line-height: .95; letter-spacing: -0.055em; font-weight: 750; }
+.lede { max-width: 600px; margin: 18px auto 0; font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); text-wrap: balance; }
+.stage { position: relative; margin: clamp(8px, 3vw, 28px) auto 0; border-radius: 28px; }
+.stage.over { outline: 2px dashed var(--faint); outline-offset: -2px; }
+#phone { width: 100%; height: clamp(320px, calc(100svh - 360px), 780px); }
+.hint { margin: 0; font-size: 14px; color: var(--faint); }
+.hint b { font-weight: 500; color: var(--muted); }
+.hint .touch { display: none; }
+@media (hover: none) { .hint .mouse { display: none; } .hint .touch { display: inline; } }
+
+/* Controls */
+.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; margin: 26px auto 0; max-width: 860px; }
+.btn, .seg button { font: inherit; font-size: 14px; font-weight: 550; color: var(--ink); height: 36px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line); -webkit-tap-highlight-color: transparent; }
+.btn:hover, .seg button:hover { border-color: color-mix(in srgb, var(--ink) 25%, transparent); }
+.btn:disabled, .seg button:disabled { opacity: .4; cursor: default; }
+.btn:focus-visible, .seg button:focus-visible, .range:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); }
+.seg button { height: 28px; padding: 0 13px; border: 0; background: transparent; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.hingebox { display: inline-flex; align-items: center; gap: 12px; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 14px; font-weight: 550; }
+.hingebox output { width: 36px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.range { -webkit-appearance: none; appearance: none; width: 150px; height: 20px; margin: 0; background: transparent; cursor: pointer; --p: 1; }
+.range::-webkit-slider-runnable-track { height: 3px; border-radius: 3px; background: linear-gradient(to right, var(--ink) calc(var(--p) * 100%), var(--line) 0); }
+.range::-moz-range-track { height: 3px; border-radius: 3px; background: linear-gradient(to right, var(--ink) calc(var(--p) * 100%), var(--line) 0); }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6.5px; border-radius: 50%; background: var(--thumb); border: 0; }
+.range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--thumb); border: 0; }
+.range:disabled { opacity: .4; cursor: default; }
+.break { flex-basis: 100%; height: 0; }
+
+/* Sections */
+section { padding-top: clamp(72px, 11vw, 128px); }
+h2 { margin: 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.035em; line-height: 1.1; font-weight: 700; }
+.sub { margin: 12px 0 0; max-width: 620px; color: var(--muted); }
+h3 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+
+.steps > *, .ref > *, .poses > * { min-width: 0; }
+
+/* Poses */
+.poses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+.pose { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 6px 6px 16px; }
+.pose unfold-device { aspect-ratio: 4 / 3; --unfold-shadow: .22; }
+.pose figcaption { padding: 0 12px; }
+.pose code { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+
+/* Code */
+.steps { display: grid; gap: 34px; margin-top: 36px; counter-reset: step; }
+.step h3 { display: flex; align-items: baseline; gap: 10px; }
+.step h3::before { counter-increment: step; content: counter(step); font-size: 13px; font-weight: 600; color: var(--faint); font-variant-numeric: tabular-nums; }
+.step p { margin: 6px 0 0; color: var(--muted); max-width: 640px; }
+.code { position: relative; margin-top: 14px; }
+pre { margin: 0; padding: 18px 20px; overflow-x: auto; background: var(--code); border: 1px solid var(--line); border-radius: 16px; font-size: 14px; line-height: 1.6; tab-size: 2; }
+.copy { position: absolute; top: 10px; right: 10px; height: 28px; padding: 0 11px; font-size: 12.5px; }
+.t-tag { color: var(--c-tag); } .t-attr { color: var(--c-attr); } .t-str { color: var(--c-str); } .t-com { color: var(--c-com); } .t-kw { color: var(--c-tag); }
+
+/* Reference */
+.ref { margin-top: 40px; display: grid; gap: 44px; }
+table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 15px; }
+th { text-align: left; font-size: 12.5px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; padding: 0 16px 10px 0; border-bottom: 1px solid var(--line); }
+td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--muted); }
+td:first-child { white-space: nowrap; color: var(--ink); }
+td code, p code, li code { font-size: .88em; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; }
+td:first-child code { background: none; border: 0; padding: 0; font-size: 14px; }
+.notes { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 720px; color: var(--muted); }
+
+/* Footer: the same one as voicecanv.as and trymeth.com */
+.foot { display: grid; gap: 4px; justify-items: center; text-align: center; margin-top: clamp(80px, 12vw, 140px); border-top: 1px solid var(--line);
+  padding-block: 40px calc(40px + env(safe-area-inset-bottom, 0px)); padding-left: var(--gutter); padding-right: var(--gutter-r); }
+.foot p { margin: 0; }
+.foot .about { font-size: 14px; color: var(--muted); margin-bottom: 6px; text-wrap: balance; }
+.foot-line { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 20px; font-size: 14px; color: var(--faint); }
+.foot-line a { text-decoration: none; }
+.foot-line a:hover { color: var(--ink); }
+.foot-line b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+.maker { display: inline-flex; align-items: center; gap: 8px; }
+.maker img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.foot .fine { font-size: 12.5px; color: var(--faint); margin-top: 4px; }
+
+@media (max-width: 860px) {
+  .poses { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .top nav { gap: 16px; }
+  .top nav .wide { display: none; }
+  #phone { height: auto; aspect-ratio: 1 / 1; }
+  .poses { grid-template-columns: 1fr; }
+  .break { display: none; }
+  .range { width: 120px; }
+  pre { font-size: 13px; padding: 16px; }
+  table, tbody, tr, td { display: block; }
+  thead { display: none; }
+  tr { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 2px 0; border: 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="mark" href="#">Unfold</a>
+  <nav>
+    <a class="wide" href="#poses">Poses</a>
+    <a href="#use">Use it</a>
+    <a href="#reference">Reference</a>
+    <a href="unfold.js" download>Download</a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Unfold</h1>
+    <p class="lede">A foldable phone made of HTML and CSS. Put your own screens on it, then open it, close it and turn it around.</p>
+
+    <div class="stage" id="stage">
+      <unfold-device id="phone" interactive fold="0" yaw="-30" pitch="10"
+        inner="demo/inner-landscape.webp" cover="demo/cover.webp" front="demo/front.webp"></unfold-device>
+    </div>
+    <p class="hint"><span class="mouse">Drag to turn it, click to flip it. <b>Drop a screenshot or video on it</b> to see your own.</span><span class="touch">Drag sideways to turn it, tap to flip it.</span></p>
+
+    <div class="controls">
+      <button class="btn" id="fold" type="button">Open</button>
+      <button class="btn" id="flip" type="button">Flip</button>
+      <button class="btn" id="spin" type="button">Spin</button>
+      <label class="hingebox">Hinge
+        <input class="range" id="hinge" type="range" min="0" max="180" step="1" value="0" aria-label="Hinge angle">
+        <output id="hinge-out" for="hinge">0°</output>
+      </label>
+      <span class="break"></span>
+      <span class="seg" role="group" aria-label="Model" data-attr="model">
+        <button type="button" data-value="foldable" aria-pressed="true">Foldable</button>
+        <button type="button" data-value="bar" aria-pressed="false">Regular</button>
+      </span>
+      <span class="seg" role="group" aria-label="Orientation" data-attr="orientation">
+        <button type="button" data-value="landscape" aria-pressed="true">Landscape</button>
+        <button type="button" data-value="portrait" aria-pressed="false">Portrait</button>
+      </span>
+      <span class="seg" role="group" aria-label="Finish" data-attr="finish">
+        <button type="button" data-value="black" aria-pressed="true">Black</button>
+        <button type="button" data-value="silver" aria-pressed="false">Silver</button>
+      </span>
+      <button class="btn" id="pick" type="button">Use your screenshot</button>
+      <input id="file" type="file" accept="image/*,video/*" hidden>
+    </div>
+  </div>
+
+  <section class="wrap" id="poses">
+    <h2>Any pose, from a few attributes</h2>
+    <p class="sub">Each of these is the same element. They all turn and flip too.</p>
+    <div class="poses">
+      <figure class="pose"><unfold-device interactive fold="0" yaw="-24" pitch="8"></unfold-device>
+        <figcaption><h3>Closed</h3><code></code></figcaption></figure>
+      <figure class="pose"><unfold-device interactive fold="96" yaw="-36" pitch="12"></unfold-device>
+        <figcaption><h3>Half open</h3><code></code></figcaption></figure>
+      <figure class="pose"><unfold-device interactive fold="0" yaw="200" pitch="10" finish="silver"></unfold-device>
+        <figcaption><h3>The back, in silver</h3><code></code></figcaption></figure>
+      <figure class="pose"><unfold-device interactive orientation="portrait" fold="150" yaw="-22" pitch="8"></unfold-device>
+        <figcaption><h3>Portrait</h3><code></code></figcaption></figure>
+      <figure class="pose"><unfold-device interactive fold="180" yaw="-62" pitch="6" finish="silver"></unfold-device>
+        <figcaption><h3>Open, from the side</h3><code></code></figcaption></figure>
+      <figure class="pose"><unfold-device interactive model="bar" yaw="-20" pitch="8"></unfold-device>
+        <figcaption><h3>A regular phone</h3><code></code></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="use">
+    <h2>Add it to a page</h2>
+    <p class="sub">Copy <a href="unfold.js" download>unfold.js</a> into your project. It is a single ES module with no build step.</p>
+    <div class="steps">
+      <div class="step">
+        <h3>Load the script</h3>
+        <div class="code"><pre data-lang="html">&lt;script type="module" src="unfold.js"&gt;&lt;/script&gt;</pre></div>
+      </div>
+      <div class="step">
+        <h3>Add a phone</h3>
+        <p>Give it a picture or a video for each screen. The inner screen spans both halves when it is open.</p>
+        <div class="code"><pre data-lang="html">&lt;unfold-device
+  inner="open.png"
+  cover="closed.png"
+  fold="0"
+  interactive&gt;
+&lt;/unfold-device&gt;</pre></div>
+      </div>
+      <div class="step">
+        <h3>Move it</h3>
+        <p>Every method returns a promise, so steps can run one after another.</p>
+        <div class="code"><pre data-lang="js">const phone = document.querySelector('unfold-device');
+
+await phone.open();
+await phone.animateTo({ yaw: 160, pitch: 14 }, { duration: 1200 });
+await phone.close();
+
+phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="reference">
+    <h2>Reference</h2>
+    <div class="ref">
+      <div>
+        <h3>Attributes</h3>
+        <table>
+          <thead><tr><th>Name</th><th>Values</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>fold</code></td><td>0 to 180</td><td>How far it is open. 0 is shut, 180 is flat. Default 180.</td></tr>
+            <tr><td><code>yaw</code></td><td>degrees</td><td>Turns it left or right. Default -18.</td></tr>
+            <tr><td><code>pitch</code></td><td>-90 to 90</td><td>Tips the top towards you or away. Default 8.</td></tr>
+            <tr><td><code>roll</code></td><td>degrees</td><td>Rotates it flat on the page. Default 0.</td></tr>
+            <tr><td><code>inner</code></td><td>URL</td><td>Image or video on the big inside screen.</td></tr>
+            <tr><td><code>cover</code></td><td>URL</td><td>Image or video on the outside screen.</td></tr>
+            <tr><td><code>front</code></td><td>URL</td><td>Image or video on the screen of the regular phone.</td></tr>
+            <tr><td><code>model</code></td><td><code>foldable</code>, <code>bar</code></td><td>Which phone. <code>bar</code> is a regular one-piece phone.</td></tr>
+            <tr><td><code>finish</code></td><td><code>black</code>, <code>silver</code></td><td>The colour of the metal and the back.</td></tr>
+            <tr><td><code>orientation</code></td><td><code>landscape</code>, <code>portrait</code></td><td>In portrait the phone turns on its side as it opens, so the inside screen stands upright.</td></tr>
+            <tr><td><code>interactive</code></td><td>present or not</td><td>Drag to turn, click to flip, arrow keys to turn, F to fold.</td></tr>
+            <tr><td><code>click</code></td><td><code>flip</code>, <code>fold</code>, <code>none</code></td><td>What a click does when it is interactive. Default <code>flip</code>.</td></tr>
+            <tr><td><code>zoom</code></td><td>number</td><td>Scales the phone within the element. Default 1.</td></tr>
+            <tr><td><code>shadow</code></td><td><code>none</code></td><td>Hides the shadow underneath.</td></tr>
+            <tr><td><code>label</code></td><td>text</td><td>What screen readers call it. Default "Foldable phone".</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Methods and properties</h3>
+        <table>
+          <thead><tr><th>Name</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>open(options)</code></td><td>Unfolds it flat.</td></tr>
+            <tr><td><code>close(options)</code></td><td>Folds it shut.</td></tr>
+            <tr><td><code>toggle(options)</code></td><td>Opens it if it is mostly closed, closes it otherwise.</td></tr>
+            <tr><td><code>flip(options)</code></td><td>Turns it around to show the other side.</td></tr>
+            <tr><td><code>spin(turns, options)</code></td><td>Spins it one full turn, or <code>turns</code> turns. Negative spins the other way.</td></tr>
+            <tr><td><code>animateTo(target, options)</code></td><td>Animates any of <code>fold</code>, <code>yaw</code>, <code>pitch</code> and <code>roll</code>. Options are <code>duration</code> in ms, <code>easing</code> (a CSS easing name or <code>cubic-bezier()</code>) and <code>delay</code>. Resolves <code>true</code> when it finishes, or <code>false</code> if something else moved it first.</td></tr>
+            <tr><td><code>stop()</code></td><td>Stops every animation where it is.</td></tr>
+            <tr><td><code>setScreen(name, src)</code></td><td>Puts a URL, File or Blob on <code>inner</code>, <code>cover</code> or <code>front</code>. Handy for a file picker or a drop. <code>null</code> clears it.</td></tr>
+            <tr><td><code>fold</code>, <code>yaw</code>, <code>pitch</code>, <code>roll</code></td><td>Read or set the pose right away, with no animation.</td></tr>
+            <tr><td><code>state</code></td><td>The current pose as one object.</td></tr>
+          </tbody>
+        </table>
+        <p class="sub">Animations respect reduced motion: they jump straight to the end unless you pass <code>force: true</code>.</p>
+      </div>
+      <div>
+        <h3>Events</h3>
+        <table>
+          <thead><tr><th>Name</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><code>change</code></td><td>Every time it moves. <code>event.detail</code> is the pose: <code>{ fold, yaw, pitch, roll }</code>.</td></tr>
+            <tr><td><code>activate</code></td><td>On a click, Enter or Space when it is interactive. <code>event.detail.action</code> says what it did.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Styling</h3>
+        <table>
+          <thead><tr><th>Name</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>width</code>, <code>height</code></td><td>The element is a block, 16:10 by default. Size it however you like and the phone scales to fit.</td></tr>
+            <tr><td><code>--unfold-metal</code></td><td>Colour of the frame. Overrides the finish.</td></tr>
+            <tr><td><code>--unfold-back</code></td><td>Colour of the back glass.</td></tr>
+            <tr><td><code>--unfold-plateau</code></td><td>Colour of the camera bump.</td></tr>
+            <tr><td><code>--unfold-shadow</code></td><td>How dark the shadow is, 0 to 1. Default 0.3.</td></tr>
+            <tr><td><code>::part()</code></td><td><code>stage</code>, <code>shadow</code>, <code>screen</code>, <code>back-glass</code> and <code>camera</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Your own phone</h3>
+        <p class="sub">Models and finishes are plain objects, measured in millimetres. Add one, then use it by name.</p>
+        <div class="code"><pre data-lang="js">import { MODELS, addModel, addFinish } from './unfold.js';
+
+addFinish('blue', { metal: '#3d4b63', back: '#2b3547', plateau: '#232b39' });
+addModel('compact', { ...MODELS.bar, width: 67.6, height: 139.6 });</pre></div>
+        <div class="code"><pre data-lang="html">&lt;unfold-device model="compact" finish="blue" front="home.png"&gt;&lt;/unfold-device&gt;</pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="notes">
+    <h2>Notes</h2>
+    <ul class="notes">
+      <li>The foldable is built to the published size of a book-style foldable: 164.6 by 117.8 mm open, 84.1 by 117.8 mm closed and 11.3 mm thick. It is a likeness, not an official model.</li>
+      <li>It is all plain elements and CSS transforms, worked out in JavaScript each frame. There is no canvas and no WebGL, so screens stay sharp at any size and videos play as they are.</li>
+      <li>Tested in Chrome and Safari, on desktop and on phones. On a touchscreen a sideways drag turns it and a vertical swipe still scrolls the page.</li>
+      <li>Free to use under the MIT license. Not affiliated with any phone maker.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <p class="about">Unfold is a free web component for showing apps on a foldable phone.</p>
+  <p class="foot-line">
+    <a class="maker" href="https://heysigna.com/?utm_source=unfold&amp;utm_medium=referral&amp;utm_campaign=unfold&amp;utm_content=footer"><img src="demo/maker.webp" width="22" height="22" alt="" loading="lazy" decoding="async">Built by Toli Marchuk at heysigna.com</a>
+    <a href="https://x.com/tolimarchuk">@tolimarchuk on X</a>
+    <a href="https://goalbuddy.dev">From the maker of GoalBuddy · <b>★ <span id="gb-stars">800+</span></b></a>
+  </p>
+  <p class="fine">MIT licensed. Not affiliated with any phone maker.</p>
+</footer>
+
+<script type="module">
+import './unfold.js';
+
+const $ = (s, root = document) => root.querySelector(s);
+const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+const phone = $('#phone');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- screens ----------
+
+const demo = { cover: 'demo/cover.webp', front: 'demo/front.webp', landscape: 'demo/inner-landscape.webp', portrait: 'demo/inner-portrait.webp' };
+const own = new Set();   // screens showing the visitor's own file
+
+function demoScreens(el) {
+  const portrait = el.getAttribute('orientation') === 'portrait';
+  if (!own.has('inner') || el !== phone) el.setAttribute('inner', portrait ? demo.portrait : demo.landscape);
+  if (!own.has('cover') || el !== phone) el.setAttribute('cover', demo.cover);
+  if (!own.has('front') || el !== phone) el.setAttribute('front', demo.front);
+}
+
+// The screen in view right now, turning the phone to face you if its back is showing.
+function screenInView() {
+  const y = ((phone.yaw % 360) + 540) % 360 - 180;
+  if (Math.abs(y) > 90) {
+    const turn = ((-18 - y) % 360 + 540) % 360 - 180;
+    phone.animateTo({ yaw: phone.yaw + turn }, { duration: 900 });
+  }
+  if (phone.model === 'bar') return 'front';
+  return phone.fold >= 90 ? 'inner' : 'cover';
+}
+
+function useFile(file) {
+  if (!file || !/^(image|video)\//.test(file.type)) return;
+  const name = screenInView();
+  own.add(name);
+  phone.setScreen(name, file);
+}
+
+$('#pick').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { useFile(e.target.files[0]); e.target.value = ''; });
+
+const stage = $('#stage');
+stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('over'); });
+stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) stage.classList.remove('over'); });
+stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('over'); useFile(e.dataTransfer.files[0]); });
+
+// ---------- controls ----------
+
+const foldBtn = $('#fold'), hinge = $('#hinge'), hingeOut = $('#hinge-out');
+let heading = null;   // where the Open/Close button last sent the hinge
+
+function foldTo(fold, options) {
+  heading = fold;
+  foldBtn.textContent = fold >= 90 ? 'Close' : 'Open';
+  phone.animateTo({ fold }, { duration: 1300, ...options }).then(() => { if (heading === fold) heading = null; });
+}
+
+foldBtn.addEventListener('click', () => foldTo((heading ?? phone.fold) >= 90 ? 0 : 180));
+$('#flip').addEventListener('click', () => phone.flip());
+$('#spin').addEventListener('click', () => phone.spin());
+hinge.addEventListener('input', () => { heading = null; phone.fold = +hinge.value; });
+
+phone.addEventListener('change', e => {
+  const { fold } = e.detail;
+  hinge.value = fold;
+  hinge.style.setProperty('--p', fold / 180);
+  hingeOut.value = `${Math.round(fold)}°`;
+  if (heading === null) foldBtn.textContent = fold >= 90 ? 'Close' : 'Open';
+});
+
+for (const group of $$('.seg')) {
+  group.addEventListener('click', e => {
+    const button = e.target.closest('button');
+    if (!button || button.disabled) return;
+    for (const b of $$('button', group)) b.setAttribute('aria-pressed', b === button);
+    phone.setAttribute(group.dataset.attr, button.dataset.value);
+    if (group.dataset.attr === 'orientation') demoScreens(phone);
+    if (group.dataset.attr === 'model') {
+      const bar = button.dataset.value === 'bar';
+      foldBtn.disabled = hinge.disabled = bar;
+      for (const b of $$('[data-attr="orientation"] button')) b.disabled = bar;
+    }
+  });
+}
+
+// ---------- the small phones ----------
+
+for (const figure of $$('.pose')) {
+  const el = $('unfold-device', figure);
+  const shown = ['model', 'orientation', 'fold', 'yaw', 'pitch', 'finish'].filter(n => el.hasAttribute(n)).map(n => `${n}="${el.getAttribute(n)}"`);
+  $('code', figure).textContent = `<unfold-device ${shown.join(' ')}>`;
+  demoScreens(el);
+}
+
+// ---------- code ----------
+
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const rules = {
+  html: /(<\/?[\w-]+)|([\w-]+)(?==)|("[^"]*")/g,
+  js: /(\/\/.*)|('[^']*'|"[^"]*")|\b(const|await|import|from|async|function|return)\b/g,
+};
+for (const pre of $$('pre[data-lang]')) {
+  const text = pre.textContent, rule = rules[pre.dataset.lang];
+  let html = '', last = 0;
+  for (const m of text.matchAll(rule)) {
+    html += esc(text.slice(last, m.index));
+    const cls = pre.dataset.lang === 'html' ? (m[1] ? 't-tag' : m[2] ? 't-attr' : 't-str') : (m[1] ? 't-com' : m[2] ? 't-str' : 't-kw');
+    html += `<span class="${cls}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  pre.innerHTML = html + esc(text.slice(last));
+  const copy = document.createElement('button');
+  copy.className = 'btn copy'; copy.type = 'button'; copy.textContent = 'Copy';
+  copy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(text); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select and copy'; }
+    setTimeout(() => (copy.textContent = 'Copy'), 1600);
+  });
+  pre.parentElement.append(copy);
+}
+
+// ---------- intro: closed, then it opens ----------
+
+foldTo(180, { duration: reduce ? 0 : 1800, delay: 700 });
+phone.animateTo({ yaw: -16, pitch: 8 }, { duration: 2000, delay: 700 });
+
+// GoalBuddy stars, cached for ten minutes. '800+' stays on any failure.
+(async () => {
+  const el = document.getElementById('gb-stars'), key = 'gb-stars';
+  try {
+    const hit = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (hit && Date.now() - hit.t < 600000) { el.textContent = hit.n.toLocaleString('en'); return; }
+  } catch {}
+  try {
+    const res = await fetch('https://api.github.com/repos/tolimarchuk/goalbuddy', { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return;
+    const n = (await res.json()).stargazers_count;
+    if (typeof n !== 'number') return;
+    el.textContent = n.toLocaleString('en');
+    try { sessionStorage.setItem(key, JSON.stringify({ n, t: Date.now() })); } catch {}
+  } catch {}
+})();
+</script>
+</body>
+</html>

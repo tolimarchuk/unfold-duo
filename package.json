@@ -1,0 +1,25 @@
+{
+  "name": "unfold-device",
+  "version": "0.1.0",
+  "description": "A foldable phone made of HTML and CSS 3D. Open it, close it and turn it around.",
+  "type": "module",
+  "main": "unfold.js",
+  "exports": {
+    ".": "./unfold.js"
+  },
+  "files": [
+    "unfold.js"
+  ],
+  "sideEffects": true,
+  "keywords": [
+    "web-component",
+    "custom-element",
+    "css-3d",
+    "foldable",
+    "phone",
+    "mockup",
+    "device-frame"
+  ],
+  "author": "Toli Marchuk (https://heysigna.com)",
+  "license": "MIT"
+}

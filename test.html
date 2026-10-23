@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>unfold test</title>
+<style>body{margin:0;background:#dfe3ea;font:14px system-ui} .g{display:grid;grid-template-columns:repeat(3,1fr);gap:0} unfold-device{aspect-ratio:4/3;width:100%}</style>
+<script type="module" src="unfold.js"></script>
+<div class="g" id="g"></div>
+<script type="module">
+const poses = new URLSearchParams(location.search).get('p')?.split(';') || [];
+const g = document.getElementById('g');
+for (const p of poses) {
+  const d = document.createElement('unfold-device');
+  for (const kv of p.split(',')) { const [k, v] = kv.split('='); d.setAttribute(k, v ?? ''); }
+  if (!d.hasAttribute('model') || d.getAttribute('model') === 'foldable') { d.setAttribute('inner', 'demo/inner-landscape.webp'); d.setAttribute('cover', 'demo/cover.webp'); }
+  if (d.getAttribute('orientation') === 'portrait') d.setAttribute('inner', 'demo/inner-portrait.webp');
+  if (d.getAttribute('model') === 'bar') d.setAttribute('front', 'demo/front.webp');
+  g.append(d);
+}
+</script>
