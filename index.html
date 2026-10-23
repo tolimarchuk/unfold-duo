@@ -436,11 +436,15 @@ for (const b of $$('.swatches button')) {
   });
 }
 
+// The slider follows the hinge, touching the page only when the angle changes by a whole degree.
+let shownFold = -1;
 phone.addEventListener('change', e => {
-  const { fold } = e.detail;
+  const fold = Math.round(e.detail.fold);
+  if (fold === shownFold) return;
+  shownFold = fold;
   hinge.value = fold;
   hinge.style.setProperty('--p', fold / 180);
-  hingeOut.value = `${Math.round(fold)}°`;
+  hingeOut.value = `${fold}°`;
 });
 
 // ---------- code ----------

@@ -7,7 +7,7 @@ An open-source web component, `<unfold-device>`: an iPhone Duo in CSS 3D that op
 - Serve the folder (`python3 -m http.server 5190`) and open `index.html`.
 - `test.html?p=posture=laptop;posture=closed,yaw=200,finish=night-sky` draws a grid of phones, one per `;`. Check changes there in both Chrome and Safari: every posture, the back, the closed sides and both finishes.
 - Look closely at the fold of the inner screen, flat and ajar, in Safari. Any line there is a regression.
-- Animations should hold 60 frames a second in both browsers.
+- Animations should hold 60 frames a second in both browsers, and on a phone-class profile (Chrome, 390 px wide at 3x, CPU slowed 6x) drop almost no frames.
 
 ## Production
 
@@ -22,5 +22,6 @@ An open-source web component, `<unfold-device>`: an iPhone Duo in CSS 3D that op
 - Every 3D piece is a flat polygon that is a direct child of `.world`, with one `matrix3d`. Safari drops children of a nested 3D container once it is edge-on.
 - Hide faces with the eye-point check in `_render`. Pieces behind the screen or on the back (the hinge cover, the camera) also need their own "is that side in view" rule, or Safari draws them through the screen.
 - Along the fold only the face's own edge may meet the other half; anything darker under that edge shows as a line in Safari.
+- Per-frame updates stay cheap: transforms and flat background colours only. A gradient or image that changes every frame repaints its layer, and hundreds of those make phones stutter.
 - No Apple logo by default; the `logo` attribute is for people who may use one.
 - Publishing to npm is Toli's call.

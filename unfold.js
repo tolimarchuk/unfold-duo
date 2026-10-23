@@ -20,7 +20,9 @@ export const SPEC = {
   hingeCorner: 1.1,
   // The polished band's profile, as [depth behind the inner screen, inset from the outline], from the inner screen
   // back: a barrel, widest a little behind the middle, rolling 0.7 mm into the inner screen and 1.3 mm into the back.
+  // `bandLight` is the same profile with fewer rows, for when the band is only a few pixels thick.
   band: [[0, 0.68], [0.35, 0.28], [0.95, 0.06], [2.3, 0], [3.6, 0.07], [4.2, 0.3], [4.65, 0.72], [5.2, 1.3]],
+  bandLight: [[0, 0.68], [0.95, 0.06], [2.3, 0], [3.6, 0.07], [4.65, 0.72], [5.2, 1.3]],
   mechanism: 3.6,         // along the hinge the band only wraps the back edge; in front of this depth is the hinge
   overlap: 0.6,           // each half of the inner screen runs on this far past the hinge, under the other
   inner: { screen: 3.44, radius: 9 },
@@ -233,7 +235,7 @@ const STYLE = `
 :host([interactive]:active) { cursor: grabbing; }
 :host(:focus-visible) { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 8px; }
 .stage { position: absolute; inset: 0; }
-.shadow { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; will-change: transform;
+.shadow { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; will-change: transform; transform-origin: 0 0;
   background: radial-gradient(closest-side, rgba(0, 0, 0, var(--unfold-shadow, .3)), rgba(0, 0, 0, 0)); filter: blur(6px); }
 .world { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
 .world > * { position: absolute; left: 0; top: 0; transform-origin: 0 0; backface-visibility: visible; }
@@ -242,7 +244,7 @@ const STYLE = `
 .glass { background: #050507; overflow: hidden; }
 .screen { overflow: hidden; background: #000; }
 .media { left: 0; top: 0; }
-.media.alt { opacity: 0; }
+.media.alt { opacity: 0; will-change: opacity; }
 .media > img, .media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .veil { inset: 0; position: absolute; pointer-events: none; will-change: opacity; }
 .veil.dark { background: #000; opacity: 0; }
@@ -494,13 +496,15 @@ export class UnfoldDevice extends HTMLElement {
       const now = performance.now();
       this._samples.push([now, this._state.yaw]);
       while (this._samples.length > 2 && now - this._samples[0][0] > 90) this._samples.shift();
-      this._render();
+      // Phones report the finger more often than they draw; draw once per frame.
+      if (!this._dragFrame) this._dragFrame = requestAnimationFrame(() => { this._dragFrame = 0; this._render(); });
     });
     const end = e => {
       if (!drag || e.pointerId !== drag.id) return;
       const d = drag;
       drag = null;
       this._dragging = false;
+      if (d.moved) { this._last = ''; this._render(); }
       if (d.moved) {
         const [t0, y0] = this._samples[0], [t1, y1] = this._samples[this._samples.length - 1];
         const v = t1 > t0 ? (y1 - y0) / (t1 - t0) : 0;   // degrees per ms
@@ -546,6 +550,8 @@ export class UnfoldDevice extends HTMLElement {
   // turns about the hinge line, which runs half the closed gap in front of the screen.
 
   _build() {
+    this._k = 0;   // nothing draws until the new pieces are laid out
+    this._light = this._scale().k < 4.5;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="stage" part="stage"><div class="shadow" part="shadow"></div><div class="world"></div></div>`;
     this._world = this.shadowRoot.querySelector('.world');
     this._shadowEl = this.shadowRoot.querySelector('.shadow');
@@ -622,11 +628,12 @@ export class UnfoldDevice extends HTMLElement {
     const outline = halfOutline(x0, x1, hingeLeft);
     const hingeX = hingeLeft ? x0 : x1, inward = hingeLeft ? 1 : -1, centre = [(x0 + x1) / 2, 0, -T / 2];
     const onHinge = (i, j) => Math.abs(outline[i].p[0] - hingeX) < 1e-6 && Math.abs(outline[j].p[0] - hingeX) < 1e-6;
-    const rings = SPEC.band.map(([depth, inset]) => ring(outline, inset, depth));
+    const band = this._light ? SPEC.bandLight : SPEC.band;
+    const rings = band.map(([depth, inset]) => ring(outline, inset, depth));
 
     // The band: polished strips between the rings, except along the hinge. Each strip knows the surface normal along
     // both its long edges, so it is lit as a smooth roll rather than a flat facet.
-    const B = SPEC.band, tilt = B.map((_, b) => {
+    const B = band, tilt = B.map((_, b) => {
       const seg = c => { const [[d0, i0], [d1, i1]] = [B[c], B[c + 1]], l = Math.hypot(d1 - d0, i1 - i0); return [(d1 - d0) / l, -(i1 - i0) / l]; };
       const a = seg(Math.max(0, b - 1)), c = seg(Math.min(B.length - 2, b));
       const m = [a[0] + c[0], a[1] + c[1]], l = Math.hypot(m[0], m[1]);
@@ -769,7 +776,7 @@ export class UnfoldDevice extends HTMLElement {
     const W = SPEC.width, H = SPEC.height, T = SPEC.depth, cam = SPEC.camera;
     const at = (lx, ly, h) => [W - lx, -H / 2 + ly, -T - h];
     const stadium = ([h, x, y, len, hgt]) => {
-      const r = hgt / 2, pts = [], steps = 10;
+      const r = hgt / 2, pts = [], steps = this._light ? 7 : 10;
       for (let i = 0; i <= steps; i++) { const a = -90 + 180 * (i / steps); pts.push(at(x + len - r + r * Math.cos(a * DEG), y + r + r * Math.sin(a * DEG), h)); }
       for (let i = 0; i <= steps; i++) { const a = 90 + 180 * (i / steps); pts.push(at(x + r + r * Math.cos(a * DEG), y + r + r * Math.sin(a * DEG), h)); }
       return pts;
@@ -788,7 +795,8 @@ export class UnfoldDevice extends HTMLElement {
 
     // The lenses: a polished ring rising out of the plateau, then the sapphire cover.
     for (const lx of cam.lenses) {
-      const R = cam.ring / 2, circle = (r, h2) => Array.from({ length: 22 }, (_, i) => at(lx + r * Math.cos(i / 22 * 2 * Math.PI), cam.lensY + r * Math.sin(i / 22 * 2 * Math.PI), h2));
+      const R = cam.ring / 2, sides = this._light ? 16 : 22;
+      const circle = (r, h2) => Array.from({ length: sides }, (_, i) => at(lx + r * Math.cos(i / sides * 2 * Math.PI), cam.lensY + r * Math.sin(i / sides * 2 * Math.PI), h2));
       const c = at(lx, cam.lensY, h);
       this._loft('base', circle(R, h - 0.05), circle(R, h + cam.ringHeight - 0.35), c, { paint: 'metal', shine: 'polished', onBack: true });
       this._loft('base', circle(R, h + cam.ringHeight - 0.35), circle(R - 0.45, h + cam.ringHeight), c, { paint: 'metal', shine: 'polished', onBack: true });
@@ -934,21 +942,29 @@ export class UnfoldDevice extends HTMLElement {
 
   // ---------- layout: whenever the size or finish changes ----------
 
+  // Pixels per mm: sized so the open phone in landscape fills the element.
+  _scale() {
+    const w = this.clientWidth, h = this.clientHeight, fit = Math.min(w / (SPEC.width * 2 * 1.16), h / (SPEC.height * 1.3));
+    return { fit, k: (parseFloat(this.getAttribute('zoom')) || 1) * fit };
+  }
+
   _layout() {
     if (!this._world) return;
     const w = this.clientWidth, h = this.clientHeight;
     if (!w || !h) return;
-    const sw = SPEC.width * 2, sh = SPEC.height;
-    // Sized so the open phone in landscape fills the element; other postures scale down to fit as they move.
-    const fit = Math.min(w / (sw * 1.16), h / (sh * 1.3));
-    const k = (this._k = (parseFloat(this.getAttribute('zoom')) || 1) * fit);
+    // Below 4.5 px per mm (a phone up to about 850 px wide) the band is drawn with fewer rows.
+    const { fit, k: scale } = this._scale();
+    if ((scale < 4.5) !== !!this._light) { this._build(); }
+    const k = (this._k = scale);
     this._room = [w / fit, h / fit];
+    this._shadowSize = null;
+    this._shadowEl.style.width = '';
     // A move under way was framed for the old size: aim it at the new one.
     if (FRAMING.some(f => this._tweens.has(f))) {
       const end = this._framing(Object.fromEntries(GEOMETRY.map(g => [g, this._target(g)])));
       for (const f of FRAMING) { const t = this._tweens.get(f); if (t) t.to = end[f]; }
     }
-    this._eye = sw * 3.4;   // viewer distance in mm
+    this._eye = SPEC.width * 2 * 3.4;   // viewer distance in mm
     this.shadowRoot.querySelector('.stage').style.perspective = `${(this._eye * k).toFixed(0)}px`;
 
     const finish = FINISHES[this.getAttribute('finish')] || FINISHES['star-white'];
@@ -969,9 +985,14 @@ export class UnfoldDevice extends HTMLElement {
       if (p.clip) s.clipPath = polygon(p.clip, k);
       if (p.radius) s.borderRadius = px(p.radius);
       if (p.radiusMm) s.borderRadius = px(p.radiusMm);
-      // Matrix from the element's own pixels to device pixels.
+      // Matrix from the element's own pixels to device pixels, and its centre.
       p.local = [p.u[0], p.u[1], p.u[2], 0, p.v[0], p.v[1], p.v[2], 0, p.n[0], p.n[1], p.n[2], 0, p.origin[0] * k, p.origin[1] * k, p.origin[2] * k, 1];
-      p.color = '';
+      p.centre = apply(p.local, [p.w * k / 2, p.h * k / 2, 0]);
+      // A band row a few pixels tall looks the same lit flat as with a gradient across it, and a flat colour is far
+      // cheaper: browsers draw it without repainting anything. Rows tall enough to show the roll keep the gradient.
+      p.smooth = !!p.roll && p.h * k > 6;
+      p.color = ''; p.rgb = null;
+      s.backgroundImage = '';
       if (p.marks) p.marksCss = p.marks.map(m => {
         if (m.type === 'line') return `linear-gradient(90deg, transparent ${px(m.x - SPEC.antennas.width / 2)}, ${antenna} ${px(m.x - SPEC.antennas.width / 2)}, ${antenna} ${px(m.x + SPEC.antennas.width / 2)}, transparent ${px(m.x + SPEC.antennas.width / 2)})`;
         if (m.type === 'slot') {
@@ -980,7 +1001,7 @@ export class UnfoldDevice extends HTMLElement {
         }
         return `radial-gradient(${px(m.size / 2)} ${px(m.size / 2)} at ${px(m.x)} ${px(m.y)}, #0c0c0e 0 70%, rgba(0,0,0,.25) 86%, transparent 100%)`;
       }).join(', ');
-      if (p.marks && !p.roll) s.backgroundImage = p.marksCss;
+      if (p.marks && !p.smooth) s.backgroundImage = p.marksCss;
       if (p.face === 'camera') s.background = css(this._colors.back);
     }
     for (const b of this._boxes) {
@@ -1060,10 +1081,8 @@ export class UnfoldDevice extends HTMLElement {
     if (fade !== this._fade) { this._fade = fade; for (const s of this._screens) if (s.alt) s.media.style.opacity = fade; }
 
     const eye = [0, 0, this._eye * k], closed = fold < 2, flat = fold > 172, C = this._colors;
-    const facing = (m, p) => {
-      const n = unit([m[8], m[9], m[10]]), v = unit(sub(eye, apply(m, p)));
-      return [dot(n, v), n, v];
-    };
+    // At rest every colour is exact; while it moves, changes too small to see are skipped.
+    const exact = !this._dragging && !this._velocity && !this._tweens.size;
     // How a direction in a group's own space faces the eye from a point in it.
     const looks = (g, dir, at) => {
       const m = full[g], n = unit([m[0] * dir[0] + m[4] * dir[1] + m[8] * dir[2], m[1] * dir[0] + m[5] * dir[1] + m[9] * dir[2], m[2] * dir[0] + m[6] * dir[1] + m[10] * dir[2]]);
@@ -1075,33 +1094,48 @@ export class UnfoldDevice extends HTMLElement {
     const screenInView = looks('base', [0, 0, 1], [20 * k, 0, 0]) > 0 && looks('flap', [0, 0, 1], [-20 * k, 0, 0]) > 0;
 
     for (const p of this._pieces) {
-      const m = mm(full[p.group], p.local);
-      const [d, n, v] = facing(m, [p.w * k / 2, p.h * k / 2, 0]);
-      let visible = d > 0;
-      if (p.sandwiched && closed) visible = false;               // the inner screen is shut
-      if (p.gap && fold > 4) visible = false;                    // the dark gap only shows when it is closed
-      if ((p.group === 'spine' || p.hingeSide) && (flat || screenInView)) visible = false;
-      if (p.onBack && backSeen < -0.08) visible = false;
+      // Rules that hide a piece whichever way it faces, then which way it faces, from its centre.
+      let visible = !((p.sandwiched && closed) || (p.gap && fold > 4) || ((p.group === 'spine' || p.hingeSide) && (flat || screenInView))
+        || (p.onBack && backSeen < -0.08));
+      let n, v;
+      if (visible) {
+        const g = full[p.group], q = p.n, c = p.centre;
+        n = unit([g[0] * q[0] + g[4] * q[1] + g[8] * q[2], g[1] * q[0] + g[5] * q[1] + g[9] * q[2], g[2] * q[0] + g[6] * q[1] + g[10] * q[2]]);
+        v = unit(sub(eye, apply(g, c)));
+        visible = dot(n, v) > 0;
+      }
       const s = p.el.style;
       if (visible !== p.shown) { s.visibility = visible ? 'visible' : 'hidden'; p.shown = visible; }
       if (!visible) continue;
-      s.transform = `matrix3d(${m.map(x => +x.toFixed(4)).join(',')})`;
-      if (p.roll) {
+      const m = mm(full[p.group], p.local);
+      let t = 'matrix3d(';
+      for (let i = 0; i < 16; i++) t += (i ? ',' : '') + Math.round(m[i] * 1e4) / 1e4;
+      s.transform = t + ')';
+      if (p.smooth) {
         const r = m, turn = q => unit([r[0] * q[0] + r[4] * q[1] + r[8] * q[2], r[1] * q[0] + r[5] * q[1] + r[9] * q[2], r[2] * q[0] + r[6] * q[1] + r[10] * q[2]]);
         const base = C[p.paint];
         const g = `linear-gradient(${css(polished(base, turn(p.roll[0]), v))}, ${css(polished(base, turn(p.roll[1]), v))})`;
-        if (g !== p.color) { s.backgroundColor = ''; p.gradient = g; s.backgroundImage = p.marksCss ? `${p.marksCss}, ${g}` : g; p.color = g; }
+        if (g !== p.color) { s.backgroundColor = ''; s.backgroundImage = p.marksCss ? `${p.marksCss}, ${g}` : g; p.color = g; }
       } else if (p.paint) {
         const base = C[p.paint];
-        const c = p.shine === 'polished' ? polished(base, n, v) : p.shine === 'control' ? polished(base.map(x => x * 0.82), n, v) : p.shine === 'matte' ? matte(base, n, v) : base;
-        const col = css(c);
-        if (col !== p.color) { s.backgroundColor = col; p.color = col; }
+        let c;
+        if (p.roll) {
+          // A rolled row drawn flat takes the average of its two edges, which is what its gradient would average to.
+          const r = m, turn = q => unit([r[0] * q[0] + r[4] * q[1] + r[8] * q[2], r[1] * q[0] + r[5] * q[1] + r[9] * q[2], r[2] * q[0] + r[6] * q[1] + r[10] * q[2]]);
+          const a = polished(base, turn(p.roll[0]), v), b = polished(base, turn(p.roll[1]), v);
+          c = [(a[0] + b[0]) >> 1, (a[1] + b[1]) >> 1, (a[2] + b[2]) >> 1];
+        } else c = p.shine === 'polished' ? polished(base, n, v) : p.shine === 'control' ? polished(base.map(x => x * 0.82), n, v) : p.shine === 'matte' ? matte(base, n, v) : base;
+        // A change of a level or two is invisible on moving metal; leaving those out halves the repaints.
+        const last = p.rgb;
+        if (!last || Math.abs(c[0] - last[0]) > 2 || Math.abs(c[1] - last[1]) > 2 || Math.abs(c[2] - last[2]) > 2 || (exact && c.some((x, i) => x !== last[i]))) {
+          s.backgroundColor = css(c); p.rgb = c; p.color = '';
+        }
       }
       if (p.tone) {
         // The frosted back takes the light softly: darker turned away, lighter towards the key light.
-        const t = 0.93 + 0.18 * Math.max(0, dot(n, KEY)) - 1;
-        p.tone.style.background = t < 0 ? '#000' : '#fff';
-        p.tone.style.opacity = Math.abs(t).toFixed(3);
+        const t = 0.93 + 0.18 * Math.max(0, dot(n, KEY)) - 1, bg = t < 0 ? '#000' : '#fff', o = Math.abs(t).toFixed(3);
+        if (p.tone._bg !== bg) { p.tone.style.background = bg; p.tone._bg = bg; }
+        if (p.tone._o !== o) { p.tone.style.opacity = o; p.tone._o = o; }
       }
       if (p.inner) this._screenLight(p, n, fold, glow);
       if (p.cover) this._glare(p.cover.glare, n);
@@ -1113,10 +1147,12 @@ export class UnfoldDevice extends HTMLElement {
     else {
       const seen = corners.map(c => apply(view, c));
       const xs = seen.map(c => c[0]), width = Math.max(...xs) - Math.min(...xs), bottom = Math.max(...seen.map(c => c[1]));
+      // It is drawn once at the size it has at rest and scaled from there, so moving it never repaints the blur.
+      const bw = (this._shadowSize ||= [width * 0.92, width * 0.11 + 8]);
+      if (!s.width) { s.width = `${bw[0].toFixed(1)}px`; s.height = `${bw[1].toFixed(1)}px`; }
       s.display = '';
-      s.width = `${(width * 0.92).toFixed(1)}px`;
-      s.height = `${(width * 0.11 + 8).toFixed(1)}px`;
-      s.transform = `translate(${(this.clientWidth / 2 - width * 0.46).toFixed(1)}px, ${(this.clientHeight / 2 + bottom + width * 0.03).toFixed(1)}px)`;
+      s.transform = `translate(${(this.clientWidth / 2 - width * 0.46).toFixed(1)}px, ${(this.clientHeight / 2 + bottom + width * 0.03).toFixed(1)}px) `
+        + `scale(${(width * 0.92 / bw[0]).toFixed(4)}, ${((width * 0.11 + 8) / bw[1]).toFixed(4)})`;
     }
 
     this.dispatchEvent(new CustomEvent('change', { detail: this.state }));
