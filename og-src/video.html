@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unfold video frame</title>
+<style>
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body { position: relative; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; color: #1d1d1f; -webkit-font-smoothing: antialiased;
+  background: radial-gradient(58% 70% at 50% 46%, #ffffff 0%, #f5f5f7 58%, #e9e9ee 100%); }
+.mark { position: absolute; left: 72px; top: 60px; display: flex; align-items: center; gap: 14px; font-size: 34px; font-weight: 700; letter-spacing: -0.03em; }
+.mark svg { width: 34px; height: 34px; }
+.url { position: absolute; right: 72px; bottom: 58px; font-size: 26px; font-weight: 600; color: #86868b; letter-spacing: -0.01em; }
+unfold-device { position: absolute; inset: 0; width: 1920px; height: 1080px; aspect-ratio: auto; --unfold-shadow: .22; }
+</style>
+<script type="module" src="../unfold.js"></script>
+</head>
+<body>
+<div class="mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 7.5 15.4 9.5v13L3 24.5z" fill="currentColor"/><path d="M29 7.5 16.6 9.5v13L29 24.5z" fill="currentColor" opacity=".45"/></svg>Unfold</div>
+<div class="url">unfold.foo</div>
+<unfold-device posture="closed" yaw="-22" pitch="8" zoom="1.04" inner="../demo/inner-landscape.webp" cover="../demo/cover.webp"></unfold-device>
+</body>
+</html>

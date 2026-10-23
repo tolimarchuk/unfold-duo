@@ -24,7 +24,7 @@ export const SPEC = {
   mechanism: 3.6,         // along the hinge the band only wraps the back edge; in front of this depth is the hinge
   overlap: 0.6,           // each half of the inner screen runs on this far past the hinge, under the other
   inner: { screen: 3.44, radius: 9 },
-  cover: { screen: { outer: 2.75, hinge: 2.36, top: 2.745, bottom: 2.745 }, radius: 11.4, hingeRadius: 1.32, hole: { x: 7.94, y: 7.93, size: 5 } },
+  cover: { screen: { outer: 2.75, hinge: 2.36, top: 2.745, bottom: 2.745 }, radius: 11.4, hingeRadius: 1.32, hole: { x: 7.94, y: 7.93, size: 6.1 } },
   // The camera, on the back of the right half: distances from the outer edge (x) and the top (y). The plateau is a
   // soft pillow given as rings [height above the back, x, y, length, height].
   camera: {
@@ -62,17 +62,22 @@ export const FINISHES = {
 
 // Ways to hold it. `fold` is the angle between the two halves of the inner screen (0 shut, 180 flat), `roll` turns
 // it on the page, `yaw` and `pitch` are where you look from (pitch above zero looks down on it). `anchor` and `lean`
-// set which half keeps still as it folds: the whole phone turns about the hinge by lean - anchor * (180 - fold).
-// `glow` is the inner screen: off in a tent, where the cover screen faces out.
+// set how the phone sits as it folds: the right half turns about the hinge by lean - anchor * (180 - fold), and the
+// left half by that plus (180 - fold). With anchor 0.5 throughout, both halves turn at a steady rate between any two
+// postures. `glow` is the inner screen: off in a tent, where the cover screen faces out.
 export const POSTURES = {
-  closed: { fold: 0, roll: 0, anchor: 0, lean: 0, yaw: -24, pitch: 8, glow: 1 },
-  landscape: { fold: 180, roll: 0, anchor: 0, lean: 0, yaw: -16, pitch: 8, glow: 1 },
+  closed: { fold: 0, roll: 0, anchor: 0.5, lean: 90, yaw: -24, pitch: 8, glow: 1 },
+  landscape: { fold: 180, roll: 0, anchor: 0.5, lean: 0, yaw: -16, pitch: 8, glow: 1 },
   'landscape-ajar': { fold: 140, roll: 0, anchor: 0.5, lean: 0, yaw: -10, pitch: 6, glow: 1 },
-  portrait: { fold: 180, roll: -90, anchor: 0, lean: 0, yaw: -16, pitch: 8, glow: 1 },
+  portrait: { fold: 180, roll: -90, anchor: 0.5, lean: 0, yaw: -16, pitch: 8, glow: 1 },
   'portrait-ajar': { fold: 140, roll: -90, anchor: 0.5, lean: 0, yaw: -16, pitch: 6, glow: 1 },
-  laptop: { fold: 100, roll: -90, anchor: 1, lean: 90, yaw: -24, pitch: 16, glow: 1 },
+  laptop: { fold: 100, roll: -90, anchor: 0.5, lean: 50, yaw: -24, pitch: 16, glow: 1 },
   tent: { fold: 60, roll: 90, anchor: 0.5, lean: 90, yaw: -28, pitch: 12, glow: 0 },
 };
+const GEOMETRY = ['fold', 'roll', 'anchor', 'lean'];
+const FRAMING = ['fit', 'fx', 'fy', 'fz'];
+const MOVE = 'cubic-bezier(0.45, 0, 0.15, 1)';   // a gentle start and a long, soft settle
+const SHRINK = bezier(0.2, 0, 0.1, 1), GROW = bezier(0.75, 0, 0.25, 1);
 
 // Every <unfold-device> on the page, so a new finish reaches the ones already showing.
 const live = new Set();
@@ -223,7 +228,7 @@ function rrect(x, y, w, h, radii, e = 2.2) {
 const polygon = (pts, k) => `polygon(${pts.map(([x, y]) => `${(x * k).toFixed(2)}px ${(y * k).toFixed(2)}px`).join(',')})`;
 
 const STYLE = `
-:host { display: block; position: relative; width: 100%; aspect-ratio: 16 / 10; contain: layout style; content-visibility: auto; -webkit-user-select: none; user-select: none; }
+:host { display: block; position: relative; width: 100%; aspect-ratio: 16 / 10; contain: layout style; -webkit-user-select: none; user-select: none; }
 :host([interactive]) { cursor: grab; touch-action: pan-y; }
 :host([interactive]:active) { cursor: grabbing; }
 :host(:focus-visible) { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 8px; }
@@ -239,9 +244,10 @@ const STYLE = `
 .media { left: 0; top: 0; }
 .media > img, .media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .veil { inset: 0; position: absolute; pointer-events: none; will-change: opacity; }
-.veil.blur > * { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(14px) saturate(1.2); }
-.veil.dark { background: #000; }
-.crease { top: 0; bottom: 0; width: 16%; pointer-events: none; will-change: opacity; }
+.veil.dark { background: #000; opacity: 0; }
+.sweep { overflow: hidden; pointer-events: none; }
+.shade { position: absolute; left: 0; top: 0; width: 300%; height: 100%; will-change: transform;
+  background: linear-gradient(to right, rgba(0,0,0,.82) 33.3%, rgba(0,0,0,.62) 41%, rgba(0,0,0,.34) 49%, rgba(0,0,0,.12) 58%, rgba(0,0,0,0) 66.7%); }
 .glare { pointer-events: none; mix-blend-mode: screen; will-change: transform;
   background: linear-gradient(112deg, rgba(255,255,255,0) 42%, rgba(255,255,255,.13) 48.5%, rgba(255,255,255,.04) 52%, rgba(255,255,255,0) 58%); }
 .hole { border-radius: 50%; background: radial-gradient(circle at 42% 40%, #222a3a 0 12%, #07080c 24% 100%); box-shadow: 0 0 0 0.6px rgba(255,255,255,.05); }
@@ -266,7 +272,9 @@ export class UnfoldDevice extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     const { fold, yaw, pitch, roll, anchor, lean, glow } = POSTURES.landscape;
-    this._state = { fold, yaw, pitch, roll, anchor, lean, glow };
+    // fit, fx, fy and fz frame the phone: its scale and the point it turns about (mm). They follow the shape of the
+    // phone, except while it moves between postures, when they glide from one framing to the next.
+    this._state = { fold, yaw, pitch, roll, anchor, lean, glow, fit: 1, fx: 0, fy: 0, fz: -SPEC.depth / 2 };
     this._posture = 'landscape';
     this._tweens = new Map();
     this._frame = 0;
@@ -296,7 +304,7 @@ export class UnfoldDevice extends HTMLElement {
     this._posture = name;
     // Turn the short way round to the posture's view, however far the phone has been spun.
     const yaw = p.yaw + 360 * Math.round((this._target('yaw') - p.yaw) / 360);
-    return this.animateTo({ glow: 1, ...p, yaw }, { duration: 1100, ...options });
+    return this.animateTo({ glow: 1, ...p, yaw }, { duration: 1200, easing: MOVE, ...options });
   }
 
   open(options) { return this.animateTo({ fold: 180 }, options); }
@@ -312,14 +320,24 @@ export class UnfoldDevice extends HTMLElement {
    * Animates any of fold, yaw, pitch and roll. Resolves true when it finishes, or false if a newer animation of
    * the same property takes over. Jumps straight there under prefers-reduced-motion, unless `force` is set.
    */
-  animateTo(target, { duration = 1000, easing: e = 'ease-in-out', delay = 0, force = false } = {}) {
+  animateTo(target, { duration = 1000, easing: e = MOVE, delay = 0, force = false } = {}) {
     if (!force && matchMedia('(prefers-reduced-motion: reduce)').matches) { duration = 0; delay = 0; }
     const ease = easing(e);
+    // When the shape changes, the framing glides to where the new shape will sit, instead of chasing it every frame
+    // (a phone turning on its side is wider half-way round, and would otherwise shrink and grow again).
+    if (GEOMETRY.some(k => k in target)) {
+      const end = Object.fromEntries(GEOMETRY.map(k => [k, k in target ? +target[k] : this._target(k)]));
+      end.fold = clamp(end.fold, 0, 180);
+      target = { ...this._framing(end), ...target };
+    }
     const keys = Object.keys(target).filter(k => k in this._state && Number.isFinite(+target[k]));
     return Promise.all(keys.map(key => new Promise(resolve => {
       this._tweens.get(key)?.resolve(false);
       const to = key === 'fold' ? clamp(+target[key], 0, 180) : key === 'pitch' ? clamp(+target[key], -90, 90) : +target[key];
-      this._tweens.set(key, { from: this._state[key], to, start: performance.now() + delay, duration, ease, resolve });
+      // The scale shrinks a little ahead of the move and grows a little behind it, so a phone turning on its side
+      // never outgrows its frame half-way round.
+      const lead = key === 'fit' && duration > 0 ? (to < this._state.fit ? SHRINK : GROW) : ease;
+      this._tweens.set(key, { from: this._state[key], to, start: performance.now() + delay, duration, ease: lead, resolve });
       this._tick();
     }))).then(done => done.every(Boolean));
   }
@@ -398,6 +416,8 @@ export class UnfoldDevice extends HTMLElement {
   }
 
   _set(values, render = true) {
+    // Setting the shape directly hands the framing back to the shape.
+    if (GEOMETRY.some(k => k in values)) for (const k of FRAMING) { this._tweens.get(k)?.resolve(false); this._tweens.delete(k); }
     for (const [k, v] of Object.entries(values)) {
       if (!(k in this._state) || !Number.isFinite(+v)) continue;
       this._tweens.get(k)?.resolve(false);
@@ -692,18 +712,16 @@ export class UnfoldDevice extends HTMLElement {
     const media = this._layer(screen, 'media');
     const full = 2 * (W - S.screen);
     this._box(media, { x: hingeLeft ? -(W - S.screen) + ov + 1 : 0, y: 0, w: full, h: sh });
-    // Waking: the picture is dark and soft while the phone opens, and clears as it does. The half that carries the
-    // cover screen wakes last.
-    const blur = this._layer(screen, 'veil blur');
-    this._box(blur, { x: hingeLeft ? -(W - S.screen) + ov + 1 : 0, y: 0, w: full, h: sh });
+    // Waking: as the phone opens, a soft shadow slides off the screen towards the cover side. It is one shadow laid
+    // out across both halves like the picture, so the two halves always match at the fold.
+    const sweep = this._layer(screen, 'sweep');
+    this._box(sweep, { x: hingeLeft ? -(W - S.screen) + ov + 1 : 0, y: 0, w: full, h: sh });
+    const shade = this._layer(sweep, 'shade');
     const dark = this._layer(screen, 'veil dark');
-    // A soft band of light or shade along the fold.
-    const crease = this._layer(screen, 'crease');
-    crease.style[hingeLeft ? 'left' : 'right'] = '0';
     const glare = this._layer(glass, 'glare');
     this._box(glare, { x: hingeLeft ? -W + ov : 0, y: -h * 0.5, w: 2 * W, h: h * 2 });
-    face.inner = { blur, dark, crease, glare, hingeLeft };
-    this._screens.push({ kind: 'inner', media, blur, w: full, h: sh, follower: !hingeLeft });
+    face.inner = { shade, dark, glare, hingeLeft };
+    this._screens.push({ kind: 'inner', media, w: full, h: sh, follower: !hingeLeft });
   }
 
   _buildCover(face, w, h) {
@@ -844,7 +862,6 @@ export class UnfoldDevice extends HTMLElement {
       const current = s.media.firstElementChild;
       if (current && current.getAttribute('src') === src) { if (current.tagName === 'VIDEO') videos.push([s, current]); continue; }
       s.media.replaceChildren();
-      s.blur?.replaceChildren();
       s.aspect = 0;
       s.media.parentElement.style.background = src ? 'transparent' : '';
       if (!src) continue;
@@ -860,8 +877,6 @@ export class UnfoldDevice extends HTMLElement {
         node = document.createElement('img');
         node.alt = ''; node.decoding = 'async'; node.draggable = false;
         node.addEventListener('load', () => { s.aspect = node.naturalWidth / node.naturalHeight; this._orient(); });
-        // The soft copy that shows while the phone wakes.
-        if (s.blur) { const copy = document.createElement('img'); copy.alt = ''; copy.draggable = false; copy.setAttribute('src', src); s.blur.append(copy); }
       }
       node.setAttribute('src', src);
       s.media.append(node);
@@ -886,9 +901,9 @@ export class UnfoldDevice extends HTMLElement {
   _orient() {
     for (const s of this._screens || []) {
       const turn = s.aspect > 0 && (s.aspect > 1) !== (s.w > s.h);
-      for (const node of [s.media.firstElementChild, s.blur?.firstElementChild]) {
+      for (const node of [s.media.firstElementChild]) {
         if (!node) continue;
-        const grow = node.parentElement === s.blur ? 1.12 : 1;
+        const grow = 1;
         Object.assign(node.style, turn
           ? { inset: 'auto', left: '50%', top: '50%', width: `${s.h * this._k * grow}px`, height: `${s.w * this._k * grow}px`, transform: `translate(-50%, -50%) rotate(${s.kind === 'inner' ? 90 : -90}deg)` }
           : { inset: '', left: '', top: '', width: '', height: '', transform: '' });
@@ -914,6 +929,11 @@ export class UnfoldDevice extends HTMLElement {
     const fit = Math.min(w / (sw * 1.16), h / (sh * 1.3));
     const k = (this._k = (parseFloat(this.getAttribute('zoom')) || 1) * fit);
     this._room = [w / fit, h / fit];
+    // A move under way was framed for the old size: aim it at the new one.
+    if (FRAMING.some(f => this._tweens.has(f))) {
+      const end = this._framing(Object.fromEntries(GEOMETRY.map(g => [g, this._target(g)])));
+      for (const f of FRAMING) { const t = this._tweens.get(f); if (t) t.to = end[f]; }
+    }
     this._eye = sw * 3.4;   // viewer distance in mm
     this.shadowRoot.querySelector('.stage').style.perspective = `${(this._eye * k).toFixed(0)}px`;
 
@@ -962,9 +982,6 @@ export class UnfoldDevice extends HTMLElement {
           + `linear-gradient(to ${left ? 'right' : 'left'}, transparent ${px(width)}, ${g} ${px(width)})`;
       }
     }
-    for (const p of this._pieces) if (p.inner) {
-      p.inner.crease.style.background = `linear-gradient(to ${p.inner.hingeLeft ? 'right' : 'left'}, rgba(255,255,255,.55), rgba(255,255,255,.12) 30%, rgba(255,255,255,0))`;
-    }
     this._orient();
     this._last = '';
     this._render();
@@ -972,28 +989,31 @@ export class UnfoldDevice extends HTMLElement {
 
   // ---------- rendering: every frame something moves ----------
 
+  // Where a shape of the phone sits: the middle of its box once folded and held (mm), and the scale (at most 1) that
+  // keeps it inside the element with a margin.
+  _framing({ fold, roll, anchor, lean }) {
+    const H = SPEC.height, T = SPEC.depth, z0 = SPEC.gap / 2, psi = 180 - fold;
+    const hold = mm(rotZ(roll), rotY(lean - anchor * psi));
+    const place = { base: hold, flap: mm(hold, mm(tr(0, 0, z0), mm(rotY(psi), tr(0, 0, -z0)))) };
+    const corners = [];
+    for (const leaf of this._leaves || [{ group: 'base', x0: 0, x1: SPEC.width }, { group: 'flap', x0: -SPEC.width, x1: 0 }]) {
+      for (const x of [leaf.x0, leaf.x1]) for (const y of [-H / 2, H / 2]) for (const z of [-T, 0]) corners.push(apply(place[leaf.group], [x, y, z]));
+    }
+    const lo = [0, 1, 2].map(i => Math.min(...corners.map(c => c[i]))), hi = [0, 1, 2].map(i => Math.max(...corners.map(c => c[i])));
+    const room = this._room || [SPEC.width * 2 * 1.16, SPEC.height * 1.3];
+    const fit = Math.min(1, room[0] / ((hi[0] - lo[0]) * 1.16), room[1] / ((hi[1] - lo[1]) * 1.3));
+    return { fit, fx: (lo[0] + hi[0]) / 2, fy: (lo[1] + hi[1]) / 2, fz: (lo[2] + hi[2]) / 2 };
+  }
+
   _render() {
     if (!this._k || !this._world || this._onScreen === false) return;
-    const k = this._k, { fold, yaw, pitch, roll, anchor, lean, glow } = this._state;
+    const st = this._state, k = this._k, { fold, yaw, pitch, roll, anchor, lean, glow } = st;
     const H = SPEC.height, T = SPEC.depth, z0 = SPEC.gap / 2;
-    const key = [fold, yaw, pitch, roll, anchor, lean, glow, k].map(v => v.toFixed(3)).join();
-    if (key === this._last && !this._waking) return;
+    // The framing follows the shape, unless it is gliding between postures.
+    if (!FRAMING.some(f => this._tweens.has(f))) Object.assign(st, this._framing(st));
+    const key = [fold, yaw, pitch, roll, anchor, lean, glow, st.fit, st.fx, st.fy, st.fz, k].map(v => v.toFixed(3)).join();
+    if (key === this._last) return;
     this._last = key;
-
-    // The inner screen wakes as it opens: dark and soft at first, clearing over a moment once there is room to see
-    // it. The half that carries the cover screen clears last. Closing, it goes dark straight away.
-    const now = performance.now(), dt = now - (this._renderedAt || 0);
-    this._renderedAt = now;
-    const goal = { base: smooth(14, 80, fold) * glow, flap: smooth(26, 128, fold) * glow };
-    const wake = (this._wakeLevel ||= { ...goal });
-    let settling = false;
-    for (const side of ['base', 'flap']) {
-      const t = goal[side] > wake[side] ? (side === 'base' ? 260 : 520) : 70;
-      wake[side] += (goal[side] - wake[side]) * (1 - Math.exp(-Math.min(dt, 200) / t));
-      if (Math.abs(goal[side] - wake[side]) > 0.004) settling = true; else wake[side] = goal[side];
-    }
-    this._waking = settling;
-    if (settling) requestAnimationFrame(() => this._waking && !this._frame && this._render());
 
     // Each half turns about the hinge line: the left half by psi. Then the whole phone turns about the hinge so the
     // right part keeps still (a laptop's base stays on the table, a tent stands even), and rolls on the page.
@@ -1009,14 +1029,12 @@ export class UnfoldDevice extends HTMLElement {
     const placed = {};
     for (const g in groups) placed[g] = mm(hold, groups[g]);
 
-    // Turn around the middle of the phone as it is right now, and scale it down if this posture needs more room.
+    // Turn around the framing point, at the framing scale.
     const corners = [];
     for (const leaf of this._leaves) {
       for (const x of [leaf.x0, leaf.x1]) for (const y of [-H / 2, H / 2]) for (const z of [-T, 0]) corners.push(apply(placed[leaf.group], [x * k, y * k, z * k]));
     }
-    const lo = [0, 1, 2].map(i => Math.min(...corners.map(c => c[i]))), hi = [0, 1, 2].map(i => Math.max(...corners.map(c => c[i])));
-    const mid = lo.map((v, i) => (v + hi[i]) / 2);
-    const f = Math.min(1, this._room[0] * k / ((hi[0] - lo[0]) * 1.16), this._room[1] * k / ((hi[1] - lo[1]) * 1.3));
+    const mid = [st.fx * k, st.fy * k, st.fz * k], f = st.fit;
     const view = mm(sc(f), mm(rotX(-pitch), mm(rotY(yaw), tr(-mid[0], -mid[1], -mid[2]))));
     const full = {};
     for (const g in groups) full[g] = mm(view, placed[g]);
@@ -1065,7 +1083,7 @@ export class UnfoldDevice extends HTMLElement {
         p.tone.style.background = t < 0 ? '#000' : '#fff';
         p.tone.style.opacity = Math.abs(t).toFixed(3);
       }
-      if (p.inner) this._screenLight(p, n, fold, glow, wake[p.inner.hingeLeft ? 'base' : 'flap']);
+      if (p.inner) this._screenLight(p, n, fold, glow);
       if (p.cover) this._glare(p.cover.glare, n);
     }
 
@@ -1084,15 +1102,13 @@ export class UnfoldDevice extends HTMLElement {
     this.dispatchEvent(new CustomEvent('change', { detail: this.state }));
   }
 
-  // The inner screen as it opens: it wakes dark and soft and clears; the fold catches a soft band of light.
-  _screenLight(p, n, fold, glow, wake) {
-    const o = p.inner;
-    const soft = 1 - wake, dark = Math.min(1, 1.15 * Math.pow(soft, 1.4));
-    const set = (el, key, val) => { const t = val.toFixed(3); if (el[key] !== t) { el.style.opacity = t; el[key] = t; } };
-    set(o.blur, '_o', soft);
-    set(o.dark, '_o', Math.max(dark, 1 - glow));
-    const bend = Math.sin((180 - fold) / 2 * DEG);
-    set(o.crease, '_o', clamp(bend * (0.08 + 0.3 * Math.max(0, dot(n, KEY))), 0, 0.22) * wake);
+  // The inner screen as it opens: the shadow slides off with the hinge angle, so it runs backwards when it closes.
+  _screenLight(p, n, fold, glow) {
+    const o = p.inner, wake = smooth(12, 132, fold);
+    const t = `translateX(${(-200 * wake / 3).toFixed(2)}%)`;
+    if (o.shade._t !== t) { o.shade.style.transform = t; o.shade._t = t; }
+    const off = (1 - glow).toFixed(3);
+    if (o.dark._o !== off) { o.dark.style.opacity = off; o.dark._o = off; }
     this._glare(o.glare, n);
   }
 

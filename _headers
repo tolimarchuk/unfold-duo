@@ -9,3 +9,9 @@
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+
+/postures/*
+  Cache-Control: public, max-age=86400
+
+/og.mp4
+  Cache-Control: public, max-age=86400

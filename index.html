@@ -18,6 +18,11 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="An iPhone Duo, half open, next to the word Unfold.">
+<meta property="og:video" content="https://unfold.foo/og.mp4">
+<meta property="og:video:secure_url" content="https://unfold.foo/og.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="1920">
+<meta property="og:video:height" content="1080">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:creator" content="@tolimarchuk">
 <meta name="twitter:title" content="Unfold: iPhone Duo in HTML and CSS">
@@ -53,9 +58,12 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 52px; }
 .mark { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; letter-spacing: -0.01em; text-decoration: none; font-size: 17px; }
 .mark svg { width: 20px; height: 20px; }
-.top nav { display: flex; gap: 26px; font-size: 13px; }
-.top nav a { color: var(--muted); text-decoration: none; }
-.top nav a:hover { color: var(--ink); }
+.gh { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--ink); color: var(--bg); text-decoration: none; font-size: 14px; font-weight: 600; letter-spacing: -0.005em; }
+.gh:hover { opacity: .88; }
+.gh > svg { width: 16px; height: 16px; }
+.gh .stars { display: inline-flex; align-items: center; gap: 4px; margin-left: 2px; padding-left: 10px; border-left: 1px solid color-mix(in srgb, var(--bg) 30%, transparent); font-variant-numeric: tabular-nums; }
+.gh .stars[hidden] { display: none; }
+.gh .stars svg { width: 13px; height: 13px; }
 
 /* Hero */
 .hero { text-align: center; padding-top: clamp(28px, 4.5vw, 56px); background: radial-gradient(70% 55% at 50% 58%, var(--glow) 0, var(--bg) 72%); }
@@ -63,7 +71,6 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 h1 { margin: 6px 0 0; font-size: clamp(56px, 10vw, 112px); line-height: .95; letter-spacing: -0.045em; font-weight: 700; }
 .lede { max-width: 620px; margin: 18px auto 0; font-size: clamp(18px, 2.3vw, 22px); line-height: 1.38; color: var(--muted); text-wrap: balance; letter-spacing: -0.01em; }
 .stage { position: relative; margin: 0 auto; border-radius: 32px; transition: background .2s; }
-.stage.over { background: var(--chip); outline: 2px dashed var(--faint); outline-offset: -8px; }
 #phone { width: 100%; height: clamp(360px, calc(100svh - 370px), 780px); --unfold-shadow: .26; }
 .hint { margin: 0; font-size: 13px; color: var(--faint); }
 .hint .touch { display: none; }
@@ -103,9 +110,10 @@ h3 { margin: 0; font-size: 17px; letter-spacing: -0.015em; font-weight: 650; }
 /* Postures */
 .postures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 44px; }
 .posture { margin: 0; background: var(--surface); border-radius: 24px; padding: 8px 8px 18px; border: 1px solid var(--line); }
-.posture unfold-device { aspect-ratio: 1 / 1; --unfold-shadow: .2; }
+.posture img { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; }
 .posture figcaption { padding: 0 12px; }
-.posture code { display: block; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+.posture code { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
+.posture p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
 
 /* Specs */
 .specs { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: center; margin-top: 36px; }
@@ -161,8 +169,6 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
 }
 @media (max-width: 640px) {
   body { font-size: 16px; }
-  .top nav { gap: 18px; }
-  .top nav .wide { display: none; }
   #phone { height: auto; aspect-ratio: 1 / 1; }
   .dock { margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter-r)); border-radius: 0; border-left: 0; border-right: 0; max-width: 100vw; }
   .dock button { min-width: 76px; }
@@ -183,13 +189,7 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
 <header class="top">
   <div class="wrap">
     <a class="mark" href="#"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 7.5 15.4 9.5v13L3 24.5z" fill="currentColor"/><path d="M29 7.5 16.6 9.5v13L29 24.5z" fill="currentColor" opacity=".45"/></svg>Unfold</a>
-    <nav>
-      <a class="wide" href="#postures">Postures</a>
-      <a class="wide" href="#measured">Details</a>
-      <a href="#use">Use it</a>
-      <a href="#reference">Reference</a>
-      <a href="https://github.com/tolimarchuk/unfold-duo">GitHub</a>
-    </nav>
+    <a class="gh" href="https://github.com/tolimarchuk/unfold-duo"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>Get it on GitHub<span class="stars" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .5l2.2 4.6 5 .6-3.7 3.5 1 5L8 11.8 3.5 14.2l1-5L.8 5.7l5-.6z"/></svg><span id="stars"></span></span></a>
   </div>
 </header>
 
@@ -204,7 +204,7 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
         <unfold-device id="phone" interactive posture="closed" yaw="-30"
           inner="demo/inner-landscape.webp" cover="demo/cover.webp"></unfold-device>
       </div>
-      <p class="hint"><span class="mouse">Drag to turn it, click to flip it, or drop a screenshot on it.</span><span class="touch">Drag sideways to turn it, tap to flip it.</span></p>
+      <p class="hint"><span class="mouse">Drag to turn it. Click to flip it.</span><span class="touch">Drag sideways to turn it. Tap to flip it.</span></p>
 
       <div class="dock" role="group" aria-label="Posture" id="dock">
         <button type="button" data-posture="closed" aria-pressed="false"><svg viewBox="0 0 30 30"><rect class="fill" x="10" y="5" width="11" height="20" rx="2.6"/><path d="M10 7.5v15"/></svg>Closed</button>
@@ -227,43 +227,42 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
           <input class="range" id="hinge" type="range" min="0" max="180" step="1" value="0" aria-label="Hinge angle">
           <output id="hinge-out" for="hinge">0°</output>
         </label>
-        <button class="pill" id="pick" type="button"><svg viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="m2.5 11 3.2-3.2 2.6 2.6 1.6-1.6 3.6 3.6"/><circle cx="10.6" cy="5.8" r="1.1"/></svg>Your screenshot</button>
-        <input id="file" type="file" accept="image/*,video/*" hidden>
       </div>
     </div>
   </div>
 
   <section class="wrap" id="postures">
     <div class="head">
-      <h2>Every way it stands.</h2>
-      <p class="sub">Seven postures, one attribute each. Every phone here turns and flips too.</p>
+      <h2>Postures</h2>
+      <p class="sub">Seven values for the <code>posture</code> attribute. Fold is the angle between the two halves of the inner screen. Changing it animates from the current pose.</p>
     </div>
     <div class="postures">
-      <figure class="posture"><unfold-device interactive posture="closed"></unfold-device><figcaption><h3>Closed</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="landscape"></unfold-device><figcaption><h3>Landscape</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="landscape-ajar"></unfold-device><figcaption><h3>Landscape ajar</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="portrait"></unfold-device><figcaption><h3>Portrait</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="portrait-ajar"></unfold-device><figcaption><h3>Portrait ajar</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="laptop" finish="night-sky"></unfold-device><figcaption><h3>Laptop</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="tent" finish="night-sky"></unfold-device><figcaption><h3>Tent</h3><code></code></figcaption></figure>
-      <figure class="posture"><unfold-device interactive posture="closed" yaw="200" pitch="10" finish="night-sky"></unfold-device><figcaption><h3>The back</h3><code></code></figcaption></figure>
+      <figure class="posture"><img src="postures/closed.webp" width="520" height="520" alt="Closed iPhone Duo, cover screen facing out" loading="lazy" decoding="async"><figcaption><code>posture="closed"</code><p>Fold 0°. 84.1 × 117.8 × 11.3 mm, cover screen out.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/landscape.webp" width="520" height="520" alt="iPhone Duo open flat in landscape" loading="lazy" decoding="async"><figcaption><code>posture="landscape"</code><p>Fold 180°. 164.6 × 117.8 × 5.2 mm.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/landscape-ajar.webp" width="520" height="520" alt="iPhone Duo open to 140 degrees in landscape" loading="lazy" decoding="async"><figcaption><code>posture="landscape-ajar"</code><p>Fold 140°. Each half turned 20° towards the viewer.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/portrait.webp" width="520" height="520" alt="iPhone Duo open flat in portrait" loading="lazy" decoding="async"><figcaption><code>posture="portrait"</code><p>Fold 180°, roll −90°. Hinge runs across.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/portrait-ajar.webp" width="520" height="520" alt="iPhone Duo open to 140 degrees in portrait" loading="lazy" decoding="async"><figcaption><code>posture="portrait-ajar"</code><p>Fold 140°, roll −90°.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/laptop.webp" width="520" height="520" alt="iPhone Duo folded to 100 degrees, standing like a laptop" loading="lazy" decoding="async"><figcaption><code>posture="laptop"</code><p>Fold 100°, roll −90°. Lower half flat on the table.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/tent.webp" width="520" height="520" alt="iPhone Duo folded to 60 degrees, standing as a tent" loading="lazy" decoding="async"><figcaption><code>posture="tent"</code><p>Fold 60°, roll 90°. Stands on both outer edges, cover screen out.</p></figcaption></figure>
+      <figure class="posture"><img src="postures/back.webp" width="520" height="520" alt="Back of a closed iPhone Duo in Night Sky" loading="lazy" decoding="async"><figcaption><code>yaw="200"</code><p>Camera plateau at the top outer corner of the right half. Night Sky.</p></figcaption></figure>
     </div>
   </section>
 
   <section class="wrap" id="measured">
     <div class="head">
-      <h2>Measured, not guessed.</h2>
-      <p class="sub">The body follows Apple's published dimensions. Everything else is measured from Apple's own 3D model of the phone and its spec drawings, down to the speaker holes.</p>
+      <h2>Specifications</h2>
+      <p class="sub">Body dimensions from Apple's spec sheet. Band profile, hinge cover, camera, buttons, openings and the cover screen cutout measured from Apple's iPhone Duo AR model.</p>
     </div>
     <div class="specs">
       <div class="shot"><unfold-device id="detail" interactive posture="closed" yaw="205" pitch="12" zoom="1.18" inner="demo/inner-landscape.webp" cover="demo/cover.webp"></unfold-device></div>
       <dl>
         <div><dt>Open</dt><dd>164.6 × 117.8 × 5.2 mm</dd></div>
         <div><dt>Closed</dt><dd>84.1 × 117.8 × 11.3 mm<span>Two 5.2 mm halves with a 0.9 mm gap, and the hinge cover standing 1.8 mm out of the side.</span></dd></div>
-        <div><dt>Camera</dt><dd>A 55.8 × 21.2 mm plateau, 3.6 mm proud<span>Two lenses in 16.3 mm polished rings that rise another 1.9 mm, with the mic and flash at the inner end.</span></dd></div>
-        <div><dt>Band</dt><dd>Rounded titanium, 0.7 mm round the inner screen<span>It rolls 1.3 mm into the back glass and the cover glass, with antenna lines, speaker holes and USB-C where they really are.</span></dd></div>
+        <div><dt>Camera</dt><dd>55.8 × 21.2 mm plateau, 3.6 mm proud<span>Two lenses in 16.3 mm rings, 1.9 mm proud of the plateau. Mic and flash at the inner end.</span></dd></div>
+        <div><dt>Cover screen</dt><dd>77.2 × 112.3 mm, 6.1 mm camera cutout<span>Cutout centred 7.9 mm from the top and outer edges of the screen. The status column sits directly under it.</span></dd></div>
+        <div><dt>Band</dt><dd>Titanium, barrel profile<span>0.7 mm inset at the inner screen, 1.3 mm at the back glass. Antenna lines, speaker holes, microphones and USB-C at measured positions.</span></dd></div>
         <div><dt>Buttons</dt><dd>Volume on top, Touch ID and Camera Control on the side<span>Volume 21 to 45 mm from the corner, Touch ID 34 to 52 mm and Camera Control 77 to 94 mm down from the top.</span></dd></div>
-        <div><dt>Hinge</dt><dd>No line at the fold<span>The screen wakes dark and soft as it opens and clears from the side that was hidden, like the real one.</span></dd></div>
+        <div><dt>Hinge</dt><dd>Fold axis 0.45 mm in front of the inner screen<span>Both screen halves overlap 0.6 mm past the fold, so the picture is continuous at every angle.</span></dd></div>
         <div><dt>Finishes</dt><dd>Star White and Night Sky</dd></div>
       </dl>
     </div>
@@ -271,17 +270,17 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
 
   <section class="wrap" id="use">
     <div class="head">
-      <h2>Add it to a page.</h2>
-      <p class="sub">It is one ES module with no build step and no dependencies. Load it from here, or <a href="unfold.js" download>download unfold.js</a> and host it yourself. The source is on <a href="https://github.com/tolimarchuk/unfold-duo">GitHub</a>.</p>
+      <h2>Install</h2>
+      <p class="sub">One ES module, 60 KB, no dependencies, no build step. Load it from unfold.foo, or <a href="unfold.js" download>download unfold.js</a> and host it yourself.</p>
     </div>
     <div class="steps">
       <div class="step">
-        <h3>Load the script</h3>
+        <h3>Script tag</h3>
         <div class="code"><pre data-lang="html">&lt;script type="module" src="https://unfold.foo/unfold.js"&gt;&lt;/script&gt;</pre></div>
       </div>
       <div class="step">
-        <h3>Add a phone</h3>
-        <p>Give each screen a picture or a video. The inner screen spans both halves, and a portrait shot on it turns to stand upright when the phone does.</p>
+        <h3>Element</h3>
+        <p><code>inner</code> and <code>cover</code> take an image or video URL. The inner image spans both halves. A portrait image on the inner screen is rotated 90° to fit it.</p>
         <div class="code"><pre data-lang="html">&lt;unfold-device
   inner="open.png"
   cover="closed.png"
@@ -291,8 +290,8 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
 &lt;/unfold-device&gt;</pre></div>
       </div>
       <div class="step">
-        <h3>Move it</h3>
-        <p>Every method returns a promise, so moves can follow one another.</p>
+        <h3>JavaScript</h3>
+        <p>Every method returns a promise that resolves when the move ends.</p>
         <div class="code"><pre data-lang="js">const phone = document.querySelector('unfold-device');
 
 await phone.setPosture('closed');
@@ -305,7 +304,7 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
   </section>
 
   <section class="wrap" id="reference">
-    <div class="head"><h2>Reference.</h2></div>
+    <div class="head"><h2>API reference</h2></div>
     <div class="ref">
       <div>
         <h3>Attributes</h3>
@@ -374,7 +373,7 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
         </table>
       </div>
       <div>
-        <h3>Your own finishes and postures</h3>
+        <h3>Custom finishes and postures</h3>
         <p class="note">Both are plain objects. Add one, then use it by name.</p>
         <div class="code"><pre data-lang="js">import { addFinish, POSTURES } from 'https://unfold.foo/unfold.js';
 
@@ -386,11 +385,11 @@ POSTURES.reading = { fold: 120, roll: 0, anchor: 0.5, lean: 0, yaw: -20, pitch: 
   </section>
 
   <section class="wrap" id="notes">
-    <div class="head"><h2>Notes.</h2></div>
+    <div class="head"><h2>Implementation</h2></div>
     <ul class="notes">
-      <li>It is all plain elements and CSS 3D transforms, one matrix each, worked out in JavaScript as it moves. There is no canvas and no WebGL, so screens stay sharp at any size and videos play as they are.</li>
-      <li>Each phone builds itself when it comes near the screen and stops drawing when it scrolls away, so a page full of them stays quick. It runs at 60 frames a second in Chrome and Safari.</li>
-      <li>Tested in Chrome and Safari, on desktop and on phones. On a touchscreen a sideways drag turns it and a vertical swipe still scrolls the page.</li>
+      <li>About 640 flat polygons, each a DOM element with one <code>matrix3d</code>, in a single <code>preserve-3d</code> container. No canvas, no WebGL: screens stay sharp at any size and videos play natively.</li>
+      <li>Moves between postures turn both halves at a steady rate under one easing curve, while scale and centre glide to the target framing.</li>
+      <li>Built when within 300 px of the viewport, idle when off screen. 60 fps in Chrome and Safari, desktop and mobile. On touch, horizontal drags turn the phone and vertical swipes scroll the page.</li>
       <li>Free to use under the MIT license. Not affiliated with Apple. iPhone and iPhone Duo are trademarks of Apple Inc.</li>
     </ul>
   </section>
@@ -413,47 +412,12 @@ const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const phone = $('#phone');
 
-// ---------- screens ----------
-// The demo pictures follow the posture: an upright shot when the phone stands in portrait, a wide one on the cover
-// when it stands as a tent. A visitor's own file stays put.
-
-const demo = { wide: 'demo/inner-landscape.webp', tall: 'demo/inner-portrait.webp', cover: 'demo/cover.webp', coverWide: 'demo/cover-landscape.webp' };
-const own = new Set();
-
-function demoScreens(el, posture) {
-  const upright = /portrait|laptop/.test(posture);
-  if (!(el === phone && own.has('inner'))) el.setAttribute('inner', upright ? demo.tall : demo.wide);
-  if (!(el === phone && own.has('cover'))) el.setAttribute('cover', posture === 'tent' ? demo.coverWide : demo.cover);
-}
-
-// The screen in view right now, turning the phone to face you first if its back is showing.
-function screenInView() {
-  const y = ((phone.yaw % 360) + 540) % 360 - 180;
-  if (Math.abs(y) > 90) phone.animateTo({ yaw: phone.yaw + ((((-18 - y) % 360) + 540) % 360 - 180) }, { duration: 900 });
-  return phone.fold >= 90 ? 'inner' : 'cover';
-}
-
-function useFile(file) {
-  if (!file || !/^(image|video)\//.test(file.type)) return;
-  const name = screenInView();
-  own.add(name);
-  phone.setScreen(name, file);
-}
-
-$('#pick').addEventListener('click', () => $('#file').click());
-$('#file').addEventListener('change', e => { useFile(e.target.files[0]); e.target.value = ''; });
-const stage = $('#stage');
-stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('over'); });
-stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) stage.classList.remove('over'); });
-stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('over'); useFile(e.dataTransfer.files[0]); });
-
 // ---------- controls ----------
 
 const dock = $('#dock'), hinge = $('#hinge'), hingeOut = $('#hinge-out');
 
 function pose(name) {
   for (const b of $$('button', dock)) b.setAttribute('aria-pressed', b.dataset.posture === name);
-  demoScreens(phone, name);
   return phone.setPosture(name);
 }
 
@@ -475,15 +439,6 @@ phone.addEventListener('change', e => {
   hinge.style.setProperty('--p', fold / 180);
   hingeOut.value = `${Math.round(fold)}°`;
 });
-
-// ---------- the phones further down ----------
-
-for (const figure of $$('.posture')) {
-  const el = $('unfold-device', figure);
-  const shown = ['posture', 'yaw', 'pitch', 'finish'].filter(n => el.hasAttribute(n)).map(n => `${n}="${el.getAttribute(n)}"`);
-  $('code', figure).textContent = shown.join(' ');
-  demoScreens(el, el.getAttribute('posture'));
-}
 
 // ---------- code ----------
 
@@ -516,22 +471,24 @@ for (const pre of $$('pre[data-lang]')) {
 pose('closed');
 setTimeout(() => pose('landscape-ajar'), 900);
 
-// GoalBuddy stars, cached for ten minutes. '800+' stays on any failure.
-(async () => {
-  const el = document.getElementById('gb-stars'), key = 'gb-stars';
+// GitHub stars, cached for ten minutes. On any failure the count stays as it is.
+async function stars(repo, show) {
+  const key = `stars:${repo}`;
   try {
     const hit = JSON.parse(sessionStorage.getItem(key) || 'null');
-    if (hit && Date.now() - hit.t < 600000) { el.textContent = hit.n.toLocaleString('en'); return; }
+    if (hit && Date.now() - hit.t < 600000) return show(hit.n);
   } catch {}
   try {
-    const res = await fetch('https://api.github.com/repos/tolimarchuk/goalbuddy', { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`https://api.github.com/repos/${repo}`, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return;
     const n = (await res.json()).stargazers_count;
     if (typeof n !== 'number') return;
-    el.textContent = n.toLocaleString('en');
+    show(n);
     try { sessionStorage.setItem(key, JSON.stringify({ n, t: Date.now() })); } catch {}
   } catch {}
-})();
+}
+stars('tolimarchuk/unfold-duo', n => { $('#stars').textContent = n.toLocaleString('en'); $('.gh .stars').hidden = false; });
+stars('tolimarchuk/goalbuddy', n => { $('#gb-stars').textContent = n.toLocaleString('en'); });
 </script>
 </body>
 </html>

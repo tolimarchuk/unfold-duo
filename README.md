@@ -124,7 +124,7 @@ POSTURES.reading = { fold: 120, roll: 0, anchor: 0.5, lean: 0, yaw: -20, pitch: 
 <unfold-device finish="sage" posture="reading"></unfold-device>
 ```
 
-In a posture, `anchor` and `lean` say which part keeps still as it folds. The whole phone turns about the hinge by `lean - anchor * (180 - fold)` degrees: `anchor: 0.5, lean: 0` keeps both halves even, `anchor: 1, lean: 90` keeps the lower half flat like a laptop.
+In a posture, `anchor` and `lean` set how the phone sits: the right half turns about the hinge by `lean - anchor * (180 - fold)` degrees and the left half by that plus `180 - fold`. The built-in postures all use `anchor: 0.5`, so between any two of them both halves turn at a steady rate. `lean: 0` keeps the halves even, `lean: 90` closes it facing you.
 
 ## How it is built
 
@@ -138,7 +138,9 @@ It is all in `SPEC` at the top of `unfold.js`, in millimetres.
 
 The phone is about three hundred flat polygons: the band's rounded profile is lofted from rings, and so are the camera and the lenses. Each polygon is a plain element with one `matrix3d`, worked out in JavaScript whenever the pose changes. They all sit side by side in one 3D container rather than nested, because Safari stops drawing the children of a 3D container once it turns edge-on. Faces that point away are hidden by hand, using the real eye position, and every surface is lit from a fixed studio: the titanium reflects it, the frosted glass scatters it.
 
-The halves turn about a line half the closed gap in front of the inner screen, just as the real hinge does, and both halves of the screen run on a little past the fold so the picture never breaks. As it opens, the inner screen wakes dark and soft and clears, the hidden half last, and a soft band of light gathers along the fold.
+The halves turn about a line half the closed gap in front of the inner screen, just as the real hinge does, and both halves of the screen run on a little past the fold so the picture never breaks. As it opens, a soft shadow slides off the inner screen towards the cover side, laid out across both halves like the picture so the halves always match at the fold.
+
+Moves between postures glide the framing (scale and centre) to where the new posture will sit, rather than chasing the phone's box every frame, so a phone turning from landscape to portrait shrinks steadily instead of pulsing.
 
 Each phone builds itself when it first comes near the screen and stops drawing while it is scrolled away.
 

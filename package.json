@@ -20,7 +20,7 @@
   ],
   "sideEffects": true,
   "scripts": {
-    "site": "rm -rf dist && mkdir dist && cp -R index.html 404.html og.png _headers unfold.js demo dist/",
+    "site": "rm -rf dist && mkdir dist && cp -R index.html 404.html og.png og.mp4 _headers unfold.js demo postures dist/",
     "deploy": "npm run site && cf deploy"
   },
   "keywords": [
