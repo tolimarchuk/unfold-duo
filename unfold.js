@@ -242,6 +242,7 @@ const STYLE = `
 .glass { background: #050507; overflow: hidden; }
 .screen { overflow: hidden; background: #000; }
 .media { left: 0; top: 0; }
+.media.alt { opacity: 0; }
 .media > img, .media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .veil { inset: 0; position: absolute; pointer-events: none; will-change: opacity; }
 .veil.dark { background: #000; opacity: 0; }
@@ -265,7 +266,7 @@ const STYLE = `
 `;
 
 export class UnfoldDevice extends HTMLElement {
-  static observedAttributes = ['posture', 'fold', 'yaw', 'pitch', 'roll', 'finish', 'inner', 'cover', 'logo',
+  static observedAttributes = ['posture', 'fold', 'yaw', 'pitch', 'roll', 'finish', 'inner', 'cover', 'inner-portrait', 'cover-landscape', 'logo',
     'interactive', 'zoom', 'shadow', 'label'];
 
   constructor() {
@@ -401,7 +402,7 @@ export class UnfoldDevice extends HTMLElement {
     if (name === 'posture') this.setPosture(value);
     else if (['fold', 'yaw', 'pitch', 'roll'].includes(name)) { this._readState(); this._render(); }
     else if (name === 'interactive' || name === 'label') this._describe();
-    else if (name === 'inner' || name === 'cover') this._fillScreens();
+    else if (['inner', 'cover', 'inner-portrait', 'cover-landscape'].includes(name)) this._fillScreens();
     else if (name === 'logo') this._fillLogo();
     else this._layout();
   }
@@ -710,8 +711,11 @@ export class UnfoldDevice extends HTMLElement {
     const r = S.radius;
     this._box(screen, { x: sx, y: S.screen, w: sw, h: sh }, { clip: hingeLeft ? rrect(0, 0, sw, sh, [0, r, r, 0]) : rrect(0, 0, sw, sh, [r, 0, 0, r]) });
     const media = this._layer(screen, 'media');
-    const full = 2 * (W - S.screen);
-    this._box(media, { x: hingeLeft ? -(W - S.screen) + ov + 1 : 0, y: 0, w: full, h: sh });
+    const full = 2 * (W - S.screen), mediaBox = { x: hingeLeft ? -(W - S.screen) + ov + 1 : 0, y: 0, w: full, h: sh };
+    this._box(media, mediaBox);
+    // The upright picture for when the phone stands on its side (inner-portrait), laid out across both halves too.
+    const alt = this._layer(screen, 'media alt');
+    this._box(alt, mediaBox);
     // Waking: as the phone opens, a soft shadow slides off the screen towards the cover side. It is one shadow laid
     // out across both halves like the picture, so the two halves always match at the fold.
     const sweep = this._layer(screen, 'sweep');
@@ -721,7 +725,8 @@ export class UnfoldDevice extends HTMLElement {
     const glare = this._layer(glass, 'glare');
     this._box(glare, { x: hingeLeft ? -W + ov : 0, y: -h * 0.5, w: 2 * W, h: h * 2 });
     face.inner = { shade, dark, glare, hingeLeft };
-    this._screens.push({ kind: 'inner', media, w: full, h: sh, follower: !hingeLeft });
+    this._screens.push({ kind: 'inner', attr: 'inner', media, w: full, h: sh, follower: !hingeLeft });
+    this._screens.push({ kind: 'inner', attr: 'inner-portrait', media: alt, alt: true, w: full, h: sh, follower: !hingeLeft });
   }
 
   _buildCover(face, w, h) {
@@ -734,12 +739,15 @@ export class UnfoldDevice extends HTMLElement {
     this._box(screen, { x: s.hinge, y: s.top, w: sw, h: sh }, { clip: rrect(0, 0, sw, sh, [r, R, R, r]) });
     const media = this._layer(screen, 'media');
     this._box(media, { x: 0, y: 0, w: sw, h: sh });
+    const alt = this._layer(screen, 'media alt');
+    this._box(alt, { x: 0, y: 0, w: sw, h: sh });
     const hole = this._layer(screen, 'hole');
     this._box(hole, { x: sw - C.hole.x - C.hole.size / 2, y: C.hole.y - C.hole.size / 2, w: C.hole.size, h: C.hole.size });
     const glare = this._layer(glass, 'glare');
     this._box(glare, { x: -w * 0.5, y: -h * 0.5, w: w * 2, h: h * 2 });
     face.cover = { glare };
-    this._screens.push({ kind: 'cover', media, w: sw, h: sh });
+    this._screens.push({ kind: 'cover', attr: 'cover', media, w: sw, h: sh });
+    this._screens.push({ kind: 'cover', attr: 'cover-landscape', media: alt, alt: true, w: sw, h: sh });
   }
 
   _buildBack(face) {
@@ -858,12 +866,12 @@ export class UnfoldDevice extends HTMLElement {
     if (!this._screens) return;
     const videos = [];
     for (const s of this._screens) {
-      const src = this.getAttribute(s.kind);
+      const src = this.getAttribute(s.attr);
       const current = s.media.firstElementChild;
       if (current && current.getAttribute('src') === src) { if (current.tagName === 'VIDEO') videos.push([s, current]); continue; }
       s.media.replaceChildren();
       s.aspect = 0;
-      s.media.parentElement.style.background = src ? 'transparent' : '';
+      if (!s.alt) s.media.parentElement.style.background = src ? 'transparent' : '';
       if (!src) continue;
       let node;
       const blob = [...(this._blobs?.values() || [])].find(b => b.url === src);
@@ -882,8 +890,10 @@ export class UnfoldDevice extends HTMLElement {
       s.media.append(node);
     }
     // The inner screen is two videos, one per half: the left half follows the right.
-    const inner = videos.filter(([s]) => s.kind === 'inner');
-    if (inner.length === 2) {
+    for (const attr of ['inner', 'inner-portrait']) {
+    const inner = videos.filter(([s]) => s.attr === attr);
+    if (inner.length !== 2) continue;
+    {
       const follower = inner.find(([s]) => s.follower)[1], leader = inner.find(([s]) => !s.follower)[1];
       const sync = () => {
         if (Math.abs(follower.currentTime - leader.currentTime) > 0.06) follower.currentTime = leader.currentTime;
@@ -893,21 +903,25 @@ export class UnfoldDevice extends HTMLElement {
       if ('requestVideoFrameCallback' in leader) leader.requestVideoFrameCallback(sync); else leader.addEventListener('timeupdate', sync);
       leader.addEventListener('seeked', sync);
     }
+    }
+    this._last = '';
     this._orient();
+    this._render();
   }
 
   // A picture that is the other way round to its screen (a portrait shot on the open inner screen, or a landscape
-  // one on the cover) is turned a quarter, so it stands upright when the phone is held that way.
+  // one on the cover) is turned a quarter, so it stands upright when the phone is held that way. The pictures for a
+  // phone on its side turn against the way it rolled, so they read upright whichever way that was.
   _orient() {
+    const side = this._side || 1;
     for (const s of this._screens || []) {
       const turn = s.aspect > 0 && (s.aspect > 1) !== (s.w > s.h);
-      for (const node of [s.media.firstElementChild]) {
-        if (!node) continue;
-        const grow = 1;
-        Object.assign(node.style, turn
-          ? { inset: 'auto', left: '50%', top: '50%', width: `${s.h * this._k * grow}px`, height: `${s.w * this._k * grow}px`, transform: `translate(-50%, -50%) rotate(${s.kind === 'inner' ? 90 : -90}deg)` }
-          : { inset: '', left: '', top: '', width: '', height: '', transform: '' });
-      }
+      const node = s.media.firstElementChild;
+      if (!node) continue;
+      const deg = s.alt ? -90 * side : s.kind === 'inner' ? 90 : -90;
+      Object.assign(node.style, turn
+        ? { inset: 'auto', left: '50%', top: '50%', width: `${s.h * this._k}px`, height: `${s.w * this._k}px`, transform: `translate(-50%, -50%) rotate(${deg}deg)` }
+        : { inset: '', left: '', top: '', width: '', height: '', transform: '' });
     }
   }
 
@@ -1038,6 +1052,12 @@ export class UnfoldDevice extends HTMLElement {
     const view = mm(sc(f), mm(rotX(-pitch), mm(rotY(yaw), tr(-mid[0], -mid[1], -mid[2]))));
     const full = {};
     for (const g in groups) full[g] = mm(view, placed[g]);
+
+    // Past 30 degrees of roll the screens fade to their pictures for a phone on its side, done by 60.
+    const sideways = smooth(30, 60, Math.abs(roll)), side = roll > 1 ? 1 : roll < -1 ? -1 : this._side || -1;
+    if (side !== this._side) { this._side = side; this._orient(); }
+    const fade = sideways.toFixed(3);
+    if (fade !== this._fade) { this._fade = fade; for (const s of this._screens) if (s.alt) s.media.style.opacity = fade; }
 
     const eye = [0, 0, this._eye * k], closed = fold < 2, flat = fold > 172, C = this._colors;
     const facing = (m, p) => {

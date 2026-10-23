@@ -58,6 +58,8 @@ python3 -m http.server 5190
 | `posture` | see above | How it is held. Changing it animates to the new posture. Default `landscape`. |
 | `inner` | URL | Image or video on the big inside screen. |
 | `cover` | URL | Image or video on the outside screen. |
+| `inner-portrait` | URL | Optional upright picture for the inner screen when the phone stands on its side (portrait, portrait ajar, laptop). It fades in as the phone turns. |
+| `cover-landscape` | URL | Optional sideways picture for the cover screen when the phone stands on its side (tent). |
 | `finish` | `star-white`, `night-sky` | The colour of the frame, back and hinge. |
 | `fold` | 0 to 180 | Angle between the two halves of the inner screen. 0 is shut, 180 is flat. |
 | `yaw` | degrees | Turns it left or right. |

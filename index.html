@@ -202,7 +202,8 @@ td:first-child code { background: none; padding: 0; font-size: 14px; }
 
       <div class="stage" id="stage">
         <unfold-device id="phone" interactive posture="closed" yaw="-30"
-          inner="demo/inner-landscape.webp" cover="demo/cover.webp"></unfold-device>
+          inner="demo/inner-landscape.webp" inner-portrait="demo/inner-portrait.webp"
+          cover="demo/cover.webp" cover-landscape="demo/cover-landscape.webp"></unfold-device>
       </div>
       <p class="hint"><span class="mouse">Drag to turn it. Click to flip it.</span><span class="touch">Drag sideways to turn it. Tap to flip it.</span></p>
 
@@ -314,6 +315,8 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
             <tr><td><code>posture</code></td><td><code>closed</code>, <code>landscape</code>, <code>landscape-ajar</code>, <code>portrait</code>, <code>portrait-ajar</code>, <code>laptop</code>, <code>tent</code></td><td>How it is held. Changing it animates to the new posture. Default <code>landscape</code>.</td></tr>
             <tr><td><code>inner</code></td><td>URL</td><td>Image or video on the big inside screen.</td></tr>
             <tr><td><code>cover</code></td><td>URL</td><td>Image or video on the outside screen.</td></tr>
+            <tr><td><code>inner-portrait</code></td><td>URL</td><td>Optional upright picture for the inner screen when the phone is on its side: portrait, portrait ajar and laptop. Cross-fades in between 30° and 60° of roll.</td></tr>
+            <tr><td><code>cover-landscape</code></td><td>URL</td><td>Optional sideways picture for the cover screen when the phone is on its side, as in tent.</td></tr>
             <tr><td><code>finish</code></td><td><code>star-white</code>, <code>night-sky</code></td><td>The colour of the frame, back and hinge.</td></tr>
             <tr><td><code>fold</code></td><td>0 to 180</td><td>Angle between the two halves of the inner screen. 0 is shut, 180 is flat.</td></tr>
             <tr><td><code>yaw</code></td><td>degrees</td><td>Turns it left or right.</td></tr>
