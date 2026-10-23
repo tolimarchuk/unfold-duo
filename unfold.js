@@ -1,55 +1,60 @@
-// Unfold: a phone you can open, close and turn, drawn with CSS 3D transforms. No dependencies.
+// Unfold: iPhone Duo in HTML and CSS 3D. Open it, close it, turn it and pose it. No dependencies.
 //
 //   <script type="module" src="unfold.js"></script>
-//   <unfold-device inner="open.png" cover="closed.png" interactive></unfold-device>
+//   <unfold-device inner="open.png" cover="closed.png" posture="landscape-ajar" interactive></unfold-device>
 //
-// Geometry is in millimetres and scaled to fit the element. The foldable follows a book-style phone that is
-// 164.6 x 117.8 mm open and 84.1 x 117.8 mm closed; the bar model is a generic 6.3-inch phone.
+// Everything is in millimetres and scaled to fit the element. The body follows Apple's published size, 84.1 x 117.8
+// x 11.3 mm closed and 164.6 x 117.8 mm open. The camera, buttons and hole punch are measured from Apple's product
+// photos. Each half is 5.65 mm deep so it closes to 11.3 mm; the halves turn about the line where the two sides of
+// the inner screen meet, so the fold never opens a gap in the picture.
 
-export const MODELS = {
-  foldable: {
-    foldable: true,       // two halves on a hinge
-    width: 82.3,          // one half
-    height: 117.8,
-    depth: 5.2,           // one half
-    gap: 0.9,             // between the halves when closed
-    radius: 12.4,         // outer corners
-    hingeRadius: 1.2,     // corners along the hinge
-    rim: 1.2,             // metal band around the glass on each face
-    // Screens: insets from each edge of the face, corner radii, and an optional camera cutout [width, height, top].
-    inner: { top: 3.5, bottom: 3.5, outer: 3.55, hinge: 0, radius: 8.7, hingeRadius: 0 },
-    cover: { top: 2.8, bottom: 2.8, outer: 3.44, hinge: 1.8, radius: 9.5, hingeRadius: 1.1, cutout: [12, 4.4, 2.1] },
-    camera: { x: 5, y: 5, width: 21, height: 46, radius: 9, lens: 9, lenses: [9.5, 21.5, 33.5], flash: 41.6 },
-    buttons: [[22, 31], [34, 43], [50, 68]],   // mm from the top, along the outer edge of the camera half
+export const SPEC = {
+  width: 82.3,            // one half
+  height: 117.8,
+  depth: 5.65,            // one half
+  radius: 12.4,           // outer corners
+  hingeRadius: 0.5,       // corners along the hinge
+  rim: 1.2,               // metal band around the glass on each face
+  // Screens: insets from each edge of the face and corner radii, in mm.
+  inner: { top: 3.5, bottom: 3.5, outer: 3.55, hinge: 0, radius: 8.7, hingeRadius: 0 },
+  // The cover screen's hole punch: its centre from the screen's outer and top edges, and its diameter.
+  cover: { top: 2.8, bottom: 2.8, outer: 3.44, hinge: 1.8, radius: 9.5, hingeRadius: 1.1, hole: { x: 7.2, y: 6.9, size: 4.6 } },
+  // The camera plateau on the back of the right half, from the outer and top edges of the body. Lens centres and
+  // the mic and flash are measured from the plateau's outer end and top.
+  camera: {
+    x: 4.2, y: 4.0, width: 56.5, height: 21.8, raise: 0.9,
+    lens: { at: [10.3, 28.4], size: 16.1, glass: 13.4, raise: 0.7 },
+    mic: { x: 45.3, y: 6.5, width: 3.3, height: 1.36 },
+    flash: { x: 45.3, y: 15.3, size: 3.6 },
   },
-  bar: {
-    width: 71.5,
-    height: 149.6,
-    depth: 8.25,
-    radius: 12.85,
-    rim: 1.1,
-    front: { top: 2.6, bottom: 2.6, outer: 2.64, hinge: 2.64, radius: 10.2, hingeRadius: 10.2, cutout: [15.6, 6.1, 2.3] },
-    camera: { x: 4.5, y: 4.5, width: 21, height: 46, radius: 9, lens: 9, lenses: [9.5, 21.5, 33.5], flash: 41.6 },
-    buttons: [[45, 70]],
-    leftButtons: [[28.4, 36.7], [39.6, 59.8], [62.1, 82.3]],
-  },
+  logo: 17,               // height of the optional logo on the back
+  // Buttons, as [from, to] in mm: volume along the top edge from the outer corner, the side button (Touch ID) and
+  // Camera Control down the outer edge from the top. All on the camera half.
+  buttons: { volume: [[24, 33], [35, 45]], side: [[43, 60]], control: [[82, 98]] },
 };
 
 export const FINISHES = {
-  black: { metal: '#2b2e35', back: '#1b1d22', plateau: '#141519' },
-  silver: { metal: '#c6cad0', back: '#e2e4e8', plateau: '#d2d5da' },
+  'star-white': { metal: '#d6d5d2', back: '#f2f1ed', hinge: '#c6c5c1', ring: '#e6e5e2' },
+  'night-sky': { metal: '#2f3b4d', back: '#47535f', hinge: '#3b4657', ring: '#334055' },
 };
 
-// Every <unfold-device> on the page, so new models and finishes reach the ones already showing.
+// Ways to hold it. `fold` is the angle between the two halves of the inner screen (0 shut, 180 flat), `roll` turns
+// it on the page, `yaw` and `pitch` are where you look from (pitch above zero looks down on it). `anchor` and `lean` set which half keeps still as it
+// folds: each half turns about the hinge, and the whole phone turns by lean - anchor * (180 - fold) degrees.
+export const POSTURES = {
+  closed: { fold: 0, roll: 0, anchor: 0, lean: 0, yaw: -22, pitch: 8 },
+  landscape: { fold: 180, roll: 0, anchor: 0, lean: 0, yaw: -16, pitch: 8 },
+  'landscape-ajar': { fold: 140, roll: 0, anchor: 0.5, lean: 0, yaw: -10, pitch: 6 },
+  portrait: { fold: 180, roll: -90, anchor: 0, lean: 0, yaw: -16, pitch: 8 },
+  'portrait-ajar': { fold: 140, roll: -90, anchor: 0.5, lean: 0, yaw: -16, pitch: 6 },
+  laptop: { fold: 105, roll: -90, anchor: 1, lean: 90, yaw: -24, pitch: 16 },
+  tent: { fold: 70, roll: 90, anchor: 0.5, lean: 90, yaw: -28, pitch: 12 },
+};
+
+// Every <unfold-device> on the page, so a new finish reaches the ones already showing.
 const live = new Set();
 
-/** Adds a model (see MODELS for the shape) and redraws any phone that was waiting for it. */
-export function addModel(name, spec) {
-  MODELS[name] = spec;
-  for (const el of live) if (el.getAttribute('model') === name) { el._build(); el._layout(); el._describe(); }
-}
-
-/** Adds a finish: { metal, back, plateau } colours. */
+/** Adds a finish: { metal, back, hinge, ring } colours. */
 export function addFinish(name, colors) {
   FINISHES[name] = colors;
   for (const el of live) if (el.getAttribute('finish') === name) el._layout();
@@ -57,9 +62,13 @@ export function addFinish(name, colors) {
 
 const VIDEO = /\.(mp4|webm|mov|m4v)(\?|#|$)/i;
 const DEG = Math.PI / 180;
-const SEAM = 0.35;   // mm the right half of the inner display tucks under the left, so no hairline shows at the hinge
+const SEAM = 0.35;   // mm each half of the inner screen runs on past the hinge, under the other, so no hairline shows
 const LIGHT = norm([-0.35, -0.6, 0.72]);   // fixed to the viewer: up and to the left
 const HALF = norm([LIGHT[0], LIGHT[1], LIGHT[2] + 1]);
+// How each surface takes the light.
+const POLISHED = { amb: 0.42, dif: 0.62, spec: 0.55, pow: 18 };
+const GLASS = { amb: 0.8, dif: 0.24, spec: 0.22, pow: 40 };
+const MATTE = { amb: 0.52, dif: 0.5, spec: 0.08, pow: 6 };
 
 // ---------- small maths ----------
 
@@ -108,20 +117,21 @@ function rgb(color) {
   return s.match(/[\d.]+/g).slice(0, 3).map(Number);
 }
 
-// Lights a metal surface facing `n` (view space): diffuse plus a soft highlight.
-function shade(base, n) {
-  const d = Math.max(0, dot(n, LIGHT)), s = Math.pow(Math.max(0, dot(n, HALF)), 18);
-  const k = 0.42 + 0.62 * d;
-  return `rgb(${base.map(c => Math.round(clamp(c * k + 255 * s * 0.5, 0, 255))).join(',')})`;
+// Lights a surface of colour `base` facing `n` (view space): diffuse plus a highlight.
+function light(base, n, m, scale = 1) {
+  const d = Math.max(0, dot(n, LIGHT)), s = Math.pow(Math.max(0, dot(n, HALF)), m.pow);
+  const k = (m.amb + m.dif * d) * scale;
+  return base.map(c => Math.round(clamp(c * k + 255 * s * m.spec, 0, 255)));
 }
+const paint = c => `rgb(${c.join(',')})`;
 
 // Points along a rounded rectangle, clockwise from the top-left, with radii [tl, tr, br, bl].
-function outline(x0, y0, x1, y1, radii) {
+function outline(x0, y0, x1, y1, radii, step = 1.6) {
   const corners = [[x0, y0, 180], [x1, y0, 270], [x1, y1, 0], [x0, y1, 90]];
   const pts = [];
   corners.forEach(([cx, cy, start], i) => {
     const r = radii[i], ox = cx === x0 ? x0 + r : x1 - r, oy = cy === y0 ? y0 + r : y1 - r;
-    const n = r > 0.5 ? Math.max(2, Math.round(r / 1.6)) : 1;
+    const n = r > 0.5 ? Math.max(2, Math.round(r / step)) : 1;
     for (let j = 0; j <= n; j++) {
       const a = (start + (90 * j) / n) * DEG;
       pts.push([ox + r * Math.cos(a), oy + r * Math.sin(a)]);
@@ -146,26 +156,38 @@ const STYLE = `
 .screen { position: absolute; overflow: hidden; background: #050608; }
 .media { position: absolute; left: 0; top: 0; }
 .media > img, .media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.cutout { position: absolute; background: #000; border-radius: 999px; z-index: 2; }
+.hole { position: absolute; border-radius: 50%; z-index: 2; background: radial-gradient(circle at 42% 40%, #1b2130 0 14%, #05060a 26% 100%); }
 .glare { position: absolute; inset: 0; pointer-events: none; z-index: 3; mix-blend-mode: screen; background-size: 320% 320%;
   background-image: linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.16) 48%, rgba(255,255,255,.05) 52%, rgba(255,255,255,0) 60%); }
 .backglass { position: absolute; overflow: hidden; }
-.backglass::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,0) 45%, rgba(0,0,0,.12)); }
-.plateau { position: absolute; z-index: 1; }
-.lens { position: absolute; border-radius: 50%;
-  background: radial-gradient(circle at 38% 34%, rgba(150,180,255,.55) 0 6%, rgba(0,0,0,0) 14%),
-    radial-gradient(circle, #07080b 0 30%, #1a2232 31% 42%, #050608 43% 58%, #2a2d33 59% 70%, #0b0c0f 71%); }
-.flash { position: absolute; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fff8e6, #d9c9a0 60%, #8d826a); }
+.backglass::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,0) 45%, rgba(0,0,0,.08)); }
+.footprint { position: absolute; border-radius: 999px; background: rgba(0, 0, 0, .2); }
+.logo { position: absolute; object-fit: contain; }
+.plateau { overflow: hidden; }
+.plateau::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(170deg, rgba(255,255,255,.18), rgba(255,255,255,0) 40%, rgba(0,0,0,.06)); }
+.mic { position: absolute; border-radius: 999px; background: #17191d; }
+.flash { position: absolute; border-radius: 50%; background: radial-gradient(circle at 42% 38%, #fffaf0, #e9dcc0 45%, #b9a986 75%, #8f8470); }
+.lensglass { position: absolute; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, rgba(170, 195, 255, .55) 0 4%, rgba(0,0,0,0) 10%),
+    radial-gradient(circle at 63% 67%, rgba(140, 100, 220, .4) 0 5%, rgba(0,0,0,0) 12%),
+    radial-gradient(circle, #06070a 0 20%, #18202e 21% 30%, #07080b 31% 50%, #252a33 51% 56%, #08090c 57% 100%); }
+.control { box-sizing: border-box; background: linear-gradient(90deg, #1c1f25, #2c3038 50%, #1c1f25); }
+.knob { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .35); }
+.lens::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(0,0,0,0) 0 79%, rgba(0,0,0,.35) 81%, rgba(255,255,255,.55) 85%, rgba(255,255,255,0) 90%, rgba(0,0,0,.22) 97%); }
 `;
 
 export class UnfoldDevice extends HTMLElement {
-  static observedAttributes = ['model', 'fold', 'yaw', 'pitch', 'roll', 'finish', 'orientation', 'inner', 'cover', 'front',
+  static observedAttributes = ['posture', 'fold', 'yaw', 'pitch', 'roll', 'finish', 'inner', 'cover', 'logo',
     'interactive', 'zoom', 'shadow', 'label'];
 
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this._state = { fold: 180, yaw: -18, pitch: 8, roll: 0 };
+    const { fold, yaw, pitch, roll, anchor, lean } = POSTURES.landscape;
+    this._state = { fold, yaw, pitch, roll, anchor, lean };
+    this._posture = 'landscape';
     this._tweens = new Map();
     this._frame = 0;
     this._k = 0;
@@ -174,10 +196,8 @@ export class UnfoldDevice extends HTMLElement {
 
   // ---------- public API ----------
 
-  get model() { return MODELS[this.getAttribute('model')] ? this.getAttribute('model') : 'foldable'; }
-  get _folds() { return !!MODELS[this.model].foldable; }
-  /** The current fold (0 closed to 180 open) and yaw, pitch and roll in degrees. */
-  get state() { return { ...this._state }; }
+  /** The current pose: fold (0 closed to 180 open), yaw, pitch and roll in degrees, and the last posture asked for. */
+  get state() { const { fold, yaw, pitch, roll } = this._state; return { fold, yaw, pitch, roll, posture: this._posture }; }
   get fold() { return this._state.fold; }
   set fold(v) { this._set({ fold: v }); }
   get yaw() { return this._state.yaw; }
@@ -186,6 +206,18 @@ export class UnfoldDevice extends HTMLElement {
   set pitch(v) { this._set({ pitch: v }); }
   get roll() { return this._state.roll; }
   set roll(v) { this._set({ roll: v }); }
+  get posture() { return this._posture; }
+  set posture(name) { this.setPosture(name); }
+
+  /** Moves to one of POSTURES: closed, landscape, landscape-ajar, portrait, portrait-ajar, laptop or tent. */
+  setPosture(name, options) {
+    const p = POSTURES[name];
+    if (!p) return Promise.resolve(false);
+    this._posture = name;
+    // Turn the short way round to the posture's view, however far the phone has been spun.
+    const yaw = p.yaw + 360 * Math.round((this._target('yaw') - p.yaw) / 360);
+    return this.animateTo({ ...p, yaw }, { duration: 1200, ...options });
+  }
 
   open(options) { return this.animateTo({ fold: 180 }, options); }
   close(options) { return this.animateTo({ fold: 0 }, options); }
@@ -220,8 +252,8 @@ export class UnfoldDevice extends HTMLElement {
   }
 
   /**
-   * Sets a screen ("inner", "cover" or "front") to an image or video: a URL, or a File or Blob such as one picked or
-   * dropped by the user. Pass null to turn it off.
+   * Sets a screen ("inner" or "cover") to an image or video: a URL, or a File or Blob such as one picked or dropped
+   * by the user. Pass null to turn it off.
    */
   setScreen(name, src) {
     const blobs = (this._blobs ||= new Map());
@@ -241,8 +273,12 @@ export class UnfoldDevice extends HTMLElement {
     if (!this.hasAttribute('role')) this.setAttribute('role', 'img');
     this._describe();
     this._bindInput();
-    this._readState();
-    if (!this._world) this._build();
+    if (!this._world) {
+      const name = this.getAttribute('posture');
+      if (POSTURES[name]) { this._posture = name; Object.assign(this._state, POSTURES[name]); }
+      this._readState();
+      this._build();
+    }
     this._resize = new ResizeObserver(() => this._layout());
     this._resize.observe(this);
     if (this._tweens.size || this._velocity) this._tick();
@@ -257,10 +293,12 @@ export class UnfoldDevice extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, value) {
     if (oldValue === value || !this._world) return;
-    if (['fold', 'yaw', 'pitch', 'roll'].includes(name)) { this._readState(); this._render(); }
+    if (name === 'posture') this.setPosture(value);
+    else if (['fold', 'yaw', 'pitch', 'roll'].includes(name)) { this._readState(); this._render(); }
     else if (name === 'interactive' || name === 'label') this._describe();
-    else if (name === 'inner' || name === 'cover' || name === 'front') this._fillScreens();
-    else { if (name === 'model') this._build(); this._layout(); }
+    else if (name === 'inner' || name === 'cover') this._fillScreens();
+    else if (name === 'logo') this._fillLogo();
+    else this._layout();
   }
 
   // ---------- state and animation ----------
@@ -312,7 +350,7 @@ export class UnfoldDevice extends HTMLElement {
   // ---------- input ----------
 
   _describe() {
-    this.setAttribute('aria-label', this.getAttribute('label') || (this._folds ? 'Foldable phone' : 'Phone'));
+    this.setAttribute('aria-label', this.getAttribute('label') || 'iPhone Duo');
     if (this.hasAttribute('interactive')) {
       if (!this.hasAttribute('tabindex')) this.tabIndex = 0;
       this.setAttribute('aria-roledescription', 'interactive 3D model');
@@ -344,7 +382,7 @@ export class UnfoldDevice extends HTMLElement {
       const perPx = 205 / Math.max(320, this.clientWidth);
       this._state.yaw = drag.yaw + dx * perPx;
       // Touch drags only turn left and right, so a vertical swipe still scrolls the page.
-      if (e.pointerType !== 'touch') this._state.pitch = clamp(drag.pitch - dy * perPx * 0.7, -75, 75);
+      if (e.pointerType !== 'touch') this._state.pitch = clamp(drag.pitch + dy * perPx * 0.7, -75, 75);
       const now = performance.now();
       this._samples.push([now, this._state.yaw]);
       while (this._samples.length > 2 && now - this._samples[0][0] > 90) this._samples.shift();
@@ -375,13 +413,13 @@ export class UnfoldDevice extends HTMLElement {
       const keys = {
         ArrowLeft: () => this.animateTo({ yaw: yaw - 30 }, { duration: 400 }),
         ArrowRight: () => this.animateTo({ yaw: yaw + 30 }, { duration: 400 }),
-        ArrowUp: () => this.animateTo({ pitch: clamp(pitch + 15, -75, 75) }, { duration: 400 }),
-        ArrowDown: () => this.animateTo({ pitch: clamp(pitch - 15, -75, 75) }, { duration: 400 }),
+        ArrowUp: () => this.animateTo({ pitch: clamp(pitch - 15, -75, 75) }, { duration: 400 }),
+        ArrowDown: () => this.animateTo({ pitch: clamp(pitch + 15, -75, 75) }, { duration: 400 }),
         Enter: () => this._activate(),
         ' ': () => this._activate(),
         f: () => this.toggle(),
       };
-      const run = keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] || keys[e.key];
+      const run = keys[e.key.length === 1 ? e.key.toLowerCase() : e.key];
       if (run) { e.preventDefault(); run(); }
     });
   }
@@ -389,7 +427,7 @@ export class UnfoldDevice extends HTMLElement {
   // What a click, Enter or Space does: click="flip" (the default), click="fold" or click="none".
   _activate() {
     const action = this.getAttribute('click') || 'flip';
-    if (action === 'fold' && this._folds) this.toggle();
+    if (action === 'fold') this.toggle();
     else if (action !== 'none') this.flip();
     this.dispatchEvent(new CustomEvent('activate', { detail: { action } }));
   }
@@ -399,7 +437,6 @@ export class UnfoldDevice extends HTMLElement {
   // drops the children of a rotated 3D container once that container is edge-on, so nothing is nested.
 
   _build() {
-    const spec = (this._spec = MODELS[this.model]);
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="stage" part="stage"><div class="shadow" part="shadow"></div><div class="world"></div></div>`;
     this._world = this.shadowRoot.querySelector('.world');
     this._shadowEl = this.shadowRoot.querySelector('.shadow');
@@ -407,19 +444,17 @@ export class UnfoldDevice extends HTMLElement {
     this._boxes = [];    // flat boxes inside the faces, in mm
     this._screens = [];
 
-    const W = spec.width, R = spec.radius, r = spec.hingeRadius;
-    if (spec.foldable) {
-      // The right half goes first, so where the two halves overlap at the hinge the left one is drawn on top.
-      this._leaves = [
-        this._leaf('base', { x0: 0, x1: W, radii: [r, R, R, r], hinge: 'left', front: 'inner', back: 'camera', buttons: spec.buttons }),
-        this._leaf('flap', { x0: -W, x1: 0, radii: [R, r, r, R], hinge: 'right', front: 'inner', back: 'cover' }),
-      ];
-      this._spine(spec);
-    } else {
-      this._leaves = [this._leaf('base', { x0: -W / 2, x1: W / 2, radii: [R, R, R, R], hinge: null, front: 'front', back: 'camera',
-        buttons: spec.buttons, leftButtons: spec.leftButtons })];
-    }
+    const W = SPEC.width, R = SPEC.radius, r = SPEC.hingeRadius;
+    // The right half goes first, so where the two halves overlap at the hinge the left one is drawn on top.
+    this._leaves = [
+      this._leaf('base', { x0: 0, x1: W, radii: [r, R, R, r], hinge: 'left', back: 'camera' }),
+      this._leaf('flap', { x0: -W, x1: 0, radii: [R, r, r, R], hinge: 'right', back: 'cover' }),
+    ];
+    this._camera();
+    this._buttons();
+    this._spine();
     this._fillScreens();
+    this._fillLogo();
   }
 
   _piece(className, group, extra) {
@@ -433,63 +468,54 @@ export class UnfoldDevice extends HTMLElement {
 
   _box(el, box, extra) { this._boxes.push({ el, box, ...extra }); }
 
-  // One half of the foldable (or the whole bar phone): a front face, a back face and a wall around the outline.
-  _leaf(group, { x0, x1, radii, hinge, front, back, buttons = [], leftButtons = [] }) {
-    const spec = this._spec, H = spec.height, t = spec.depth;
-    const leaf = { group, x0, x1 };
+  // A band of strips standing on an outline (device x and y), from depth z0 to z1.
+  _walls(group, pts, z0, z1, extra, skip) {
+    for (let i = 0; i < pts.length; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length];
+      const len = Math.hypot(bx - ax, by - ay);
+      if (len < 0.01 || skip?.(ax, bx)) continue;
+      const ang = Math.atan2(by - ay, bx - ax) / DEG, mx = (ax + bx) / 2, my = (ay + by) / 2, z = (z0 + z1) / 2;
+      this._piece('wall', group, {
+        local: { wall: { mx, my, z, len, ang, t: Math.abs(z1 - z0) } },
+        normal: [Math.sin(ang * DEG), -Math.cos(ang * DEG), 0], at: [mx, my, z], ...extra,
+      });
+    }
+  }
 
+  // One half: the inner screen in front, the camera or the cover screen behind, and a polished band around it.
+  _leaf(group, { x0, x1, radii, hinge, back }) {
+    const H = SPEC.height, t = SPEC.depth;
     for (const side of ['front', 'back']) {
       // A back face is turned around, so its left edge is the leaf's right edge.
       const turned = side === 'back';
-      const hingeLeft = hinge ? (hinge === 'left') !== turned : false;
-      const tuck = side === 'front' && front === 'inner' && hinge === 'left' ? SEAM : 0;
-      const w = x1 - x0 + tuck, cx = (x0 + x1 - tuck) / 2, z = turned ? -t : 0;
+      const hingeLeft = (hinge === 'left') !== turned;
+      const tuck = turned ? 0 : SEAM, w = x1 - x0 + tuck, cx = (x0 + x1) / 2 + (hingeLeft ? -tuck : tuck) / 2;
       const faceRadii = turned ? [radii[1], radii[0], radii[3], radii[2]] : radii;
+      const square = hingeLeft ? [0, faceRadii[1], faceRadii[2], 0] : [faceRadii[0], 0, 0, faceRadii[3]];
       const piece = this._piece(`face ${side}`, group, {
-        local: { face: { cx, z, w, h: H, turned } }, radii: tuck ? [0, ...faceRadii.slice(1, 3), 0] : faceRadii,
-        normal: [0, 0, turned ? -1 : 1], at: [cx, 0, z], sandwiched: side === 'front' && !!hinge, face: true,
+        local: { flat: { cx, cy: 0, z: turned ? -t : 0, w, h: H, turned } }, radii: tuck ? square : faceRadii,
+        normal: [0, 0, turned ? -1 : 1], at: [cx, 0, turned ? -t : 0], sandwiched: !turned, face: true,
       });
-      const kind = side === 'front' ? front : back;
-      // The metal around the glass. On the inner display it is a frame with no side along the hinge, so the face's
+      const kind = turned ? back : 'inner';
+      // The metal around the glass. On the inner screen it is a frame with no side along the hinge, so the face's
       // edge there is pure picture and the two halves meet without a line.
       const metal = document.createElement('div'); metal.className = 'metal';
       piece.el.append(metal);
       piece.metalEl = metal;
       piece.frame = kind === 'inner';
-      this._box(metal, { x: 0, y: 0, w, h: H }, { radii: piece.radii, frame: kind === 'inner' ? (hingeLeft ? [1, 1, 1, 0] : [1, 0, 1, 1]) : null });
-      if (kind === 'camera') this._buildBack(piece, w, H, piece.radii, hingeLeft);
+      this._box(metal, { x: 0, y: 0, w, h: H }, { radii: piece.radii, frame: piece.frame ? (hingeLeft ? [1, 1, 1, 0] : [1, 0, 1, 1]) : null });
+      if (kind === 'camera') this._buildBack(piece, w, H, piece.radii);
       else this._buildScreen(piece, kind, group, w, H, piece.radii, hingeLeft, tuck);
     }
-
-    // The wall: one strip per segment of the outline, from the front face back by the depth.
-    const pts = outline(x0, -H / 2, x1, H / 2, radii);
-    const hingeX = hinge === 'left' ? x0 : hinge === 'right' ? x1 : null;
-    for (let i = 0; i < pts.length; i++) {
-      const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length];
-      const len = Math.hypot(bx - ax, by - ay);
-      if (len < 0.01) continue;
-      const ang = Math.atan2(by - ay, bx - ax) / DEG;
-      const mx = (ax + bx) / 2, my = (ay + by) / 2;
-      this._piece('wall', group, {
-        local: { wall: { mx, my, len, ang, t } },
-        normal: [Math.sin(ang * DEG), -Math.cos(ang * DEG), 0], at: [mx, my, -t / 2], metal: 1,
-        hingeWall: hingeX !== null && Math.abs(ax - hingeX) < 0.02 && Math.abs(bx - hingeX) < 0.02,
-      });
-    }
-
-    // Buttons stand proud of the outer edge (and the left edge, for the bar phone).
-    const outerX = hinge === 'left' ? x1 : hinge === 'right' ? x0 : x1;
-    const button = (x, [from, to], dir) => {
-      const y = -H / 2 + (from + to) / 2, bx = x + dir * 0.55;
-      this._piece('knob', group, { local: { knob: { x: bx, y, len: to - from, t: t * 0.5, dir } }, normal: [dir, 0, 0], at: [bx, y, -t / 2], metal: 0.86 });
-    };
-    buttons.forEach(b => button(outerX, b, Math.sign(outerX) || 1));
-    leftButtons.forEach(b => button(x0, b, -1));
-    return leaf;
+    // The band: one strip per segment of the outline, except along the hinge, which the spine covers.
+    const hingeX = hinge === 'left' ? x0 : x1;
+    this._walls(group, outline(x0, -H / 2, x1, H / 2, radii), 0, -t, { paint: 'metal', mat: POLISHED, edge: true },
+      (ax, bx) => Math.abs(ax - hingeX) < 0.02 && Math.abs(bx - hingeX) < 0.02);
+    return { group, x0, x1 };
   }
 
   _buildScreen(piece, kind, group, w, h, radii, hingeLeft, tuck) {
-    const spec = this._spec, conf = spec[kind], rim = spec.rim, face = piece.el;
+    const conf = SPEC[kind], rim = SPEC.rim, face = piece.el;
     const glass = document.createElement('div'); glass.className = 'glass';
     const screen = document.createElement('div'); screen.className = 'screen'; screen.part = 'screen';
     const media = document.createElement('div'); media.className = 'media';
@@ -497,7 +523,7 @@ export class UnfoldDevice extends HTMLElement {
     screen.append(media); glass.append(screen, glare); face.append(glass);
     piece.glare = glare;
 
-    // The inner display runs across the hinge with no rim or bezel there.
+    // The inner screen runs across the hinge with no rim or bezel there.
     const open = kind === 'inner';
     const left = hingeLeft ? conf.hinge : conf.outer, right = hingeLeft ? conf.outer : conf.hinge;
     const rimL = open && hingeLeft ? 0 : rim, rimR = open && !hingeLeft ? 0 : rim;
@@ -505,59 +531,108 @@ export class UnfoldDevice extends HTMLElement {
     const sRadii = hingeLeft ? [conf.hingeRadius, conf.radius, conf.radius, conf.hingeRadius] : [conf.radius, conf.hingeRadius, conf.hingeRadius, conf.radius];
     // Where the two halves meet, only the picture may reach the edge: the picture runs 1 mm past the face (which
     // clips it), and the black glass behind it is clear for the last 4 mm, apart from the bezel bands above and
-    // below. Any dark layer under that clipped edge would show as a line down the middle of the open display.
+    // below. Any dark layer under that clipped edge would show as a line down the middle of the open screen.
     const ext = open ? 1 : 0, extL = hingeLeft ? ext : 0, gw = w - rimL - rimR + ext;
     this._box(glass, { x: rimL - extL, y: rim, w: gw, h: h - 2 * rim },
       { radii: radii.map((r, i) => Math.max(0, r - (i === 0 || i === 3 ? rimL : rimR))), hingeGlass: open ? { left: hingeLeft, top: conf.top - rim, bottom: conf.bottom - rim } : null });
     this._box(screen, { x: left - rimL, y: conf.top - rim, w: sw + ext, h: sh }, { radii: sRadii });
 
-    // The glare on the inner display is one streak across both halves, laid out like the picture below.
+    // The glare on the inner screen is one streak across both halves, laid out like the picture below.
     if (open) {
-      const span = spec.width - rim;
+      const span = SPEC.width - rim;
       this._box(glare, { x: group === 'base' ? tuck + extL - span : 0, y: 0, w: span * 2, h: h - 2 * rim });
     }
 
-    // Each half of the inner display shows its side of one picture that is as wide as both halves.
+    // Each half of the inner screen shows its side of one picture that is as wide as both halves.
     const half = sw - tuck, full = open ? half * 2 : sw;
     this._box(media, { x: open && group === 'base' ? tuck - half + extL : 0, y: 0, w: full, h: sh });
-    if (conf.cutout) {
-      const [cw, ch, top] = conf.cutout;
-      const cut = document.createElement('div'); cut.className = 'cutout';
-      screen.append(cut);
-      this._box(cut, { x: (sw - cw) / 2, y: top, w: cw, h: ch });
+    if (conf.hole) {
+      const { x, y, size } = conf.hole;
+      const hole = document.createElement('div'); hole.className = 'hole';
+      screen.append(hole);
+      this._box(hole, { x: hingeLeft ? sw - x - size / 2 : x - size / 2, y: y - size / 2, w: size, h: size });
     }
     this._screens.push({ kind, screen, media, w: full, h: sh, follower: open && group === 'flap' });
   }
 
-  _buildBack(piece, w, h, radii, hingeLeft) {
-    const spec = this._spec, rim = spec.rim, cam = spec.camera;
+  _buildBack(piece, w, h, radii) {
+    const rim = SPEC.rim, cam = SPEC.camera;
     const glass = document.createElement('div'); glass.className = 'backglass'; glass.part = 'back-glass';
-    const plateau = document.createElement('div'); plateau.className = 'plateau'; plateau.part = 'camera';
-    piece.el.append(glass); glass.append(plateau);
-    this._box(glass, { x: rim, y: rim, w: w - 2 * rim, h: h - 2 * rim }, { radii: radii.map(r => Math.max(0, r - rim)), paint: 'back' });
-    // The camera sits at the top on the outer edge: top left when you look at the back.
-    const x = hingeLeft ? w - 2 * rim - cam.x - cam.width : cam.x;
-    this._box(plateau, { x, y: cam.y, w: cam.width, h: cam.height }, { radii: [cam.radius, cam.radius, cam.radius, cam.radius], paint: 'plateau' });
-    for (const y of cam.lenses) {
-      const lens = document.createElement('div'); lens.className = 'lens';
-      plateau.append(lens);
-      this._box(lens, { x: (cam.width - cam.lens) / 2, y: y - cam.lens / 2, w: cam.lens, h: cam.lens }, { paint: 'lens' });
-    }
-    const flash = document.createElement('div'); flash.className = 'flash';
-    plateau.append(flash);
-    this._box(flash, { x: (cam.width - 3.2) / 2, y: cam.flash - 1.6, w: 3.2, h: 3.2 });
+    piece.el.append(glass);
+    piece.backEl = glass;
+    this._box(glass, { x: rim, y: rim, w: w - 2 * rim, h: h - 2 * rim }, { radii: radii.map(r => Math.max(0, r - rim)) });
+    // A soft shadow where the camera plateau stands on the glass.
+    const foot = document.createElement('div'); foot.className = 'footprint';
+    glass.append(foot);
+    this._box(foot, { x: cam.x - rim + 0.3, y: cam.y - rim + 0.6, w: cam.width - 0.6, h: cam.height - 0.2 }, { blur: 1.4 });
+    const logo = document.createElement('img'); logo.className = 'logo'; logo.alt = ''; logo.hidden = true;
+    glass.append(logo);
+    this._logo = logo;
+    this._box(logo, { x: (w - SPEC.logo) / 2 - rim, y: (h - SPEC.logo) / 2 - rim, w: SPEC.logo, h: SPEC.logo });
   }
 
-  // The hinge: a half tube that tucks in behind the halves when open and becomes the rounded spine when closed.
-  _spine(spec) {
-    const R = spec.depth + spec.gap / 2 - 0.08, H = spec.height - 0.6, n = 12, span = 80;
+  // The camera plateau stands proud of the back of the right half, and the two lenses stand proud of it.
+  _camera() {
+    const W = SPEC.width, H = SPEC.height, t = SPEC.depth, cam = SPEC.camera, lens = cam.lens;
+    // Seen from the back, the plateau starts at the outer edge (x = W) and runs towards the hinge.
+    const x1 = W - cam.x, x0 = x1 - cam.width, y0 = -H / 2 + cam.y, y1 = y0 + cam.height, r = cam.height / 2;
+    const top = -t - cam.raise;
+    const plateau = this._piece('plateau', 'base', {
+      local: { flat: { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, z: top, w: cam.width, h: cam.height, turned: true } },
+      radii: [r, r, r, r], normal: [0, 0, -1], at: [(x0 + x1) / 2, (y0 + y1) / 2, top], paint: 'back', mat: GLASS, onBack: true,
+    });
+    plateau.el.part = 'camera';
+    const mic = document.createElement('div'); mic.className = 'mic';
+    const flash = document.createElement('div'); flash.className = 'flash';
+    plateau.el.append(mic, flash);
+    this._box(mic, { x: cam.mic.x - cam.mic.width / 2, y: cam.mic.y - cam.mic.height / 2, w: cam.mic.width, h: cam.mic.height });
+    this._box(flash, { x: cam.flash.x - cam.flash.size / 2, y: cam.flash.y - cam.flash.size / 2, w: cam.flash.size, h: cam.flash.size });
+    this._walls('base', outline(x0, y0, x1, y1, [r, r, r, r], 2.2), -t + 0.1, top, { paint: 'back', mat: GLASS, shade: 0.94, onBack: true });
+
+    const lensTop = top - lens.raise;
+    for (const at of lens.at) {
+      const cx = x1 - at, cy = (y0 + y1) / 2, lr = lens.size / 2;
+      const ring = this._piece('lens', 'base', {
+        local: { flat: { cx, cy, z: lensTop, w: lens.size, h: lens.size, turned: true } },
+        radii: [lr, lr, lr, lr], normal: [0, 0, -1], at: [cx, cy, lensTop], paint: 'ring', mat: POLISHED, onBack: true,
+      });
+      const glassEl = document.createElement('div'); glassEl.className = 'lensglass';
+      ring.el.append(glassEl);
+      this._box(glassEl, { x: (lens.size - lens.glass) / 2, y: (lens.size - lens.glass) / 2, w: lens.glass, h: lens.glass });
+      this._walls('base', outline(cx - lr, cy - lr, cx + lr, cy + lr, [lr, lr, lr, lr], 2.6), top + 0.1, lensTop, { paint: 'ring', mat: POLISHED, onBack: true });
+    }
+  }
+
+  // Volume along the top edge, the side button and Camera Control down the outer edge; all on the camera half.
+  _buttons() {
+    const W = SPEC.width, H = SPEC.height, t = SPEC.depth, b = SPEC.buttons, z = -t / 2;
+    const knob = (x, y, len, axis, extra) => this._piece(`knob${extra?.control ? ' control' : ''}`, 'base', {
+      local: { knob: { x, y, z, len, t: t * 0.46, axis } }, normal: axis === 'y-' ? [0, -1, 0] : [1, 0, 0], at: [x, y, z],
+      paint: 'metal', mat: POLISHED, ...extra,
+    });
+    for (const [from, to] of b.volume) knob(W - (from + to) / 2, -H / 2 - 0.5, to - from, 'y-');
+    for (const [from, to] of b.side) knob(W + 0.5, -H / 2 + (from + to) / 2, to - from, 'x+');
+    for (const [from, to] of b.control) knob(W + 0.15, -H / 2 + (from + to) / 2, to - from, 'x+', { control: true });
+  }
+
+  // The hinge: a rounded cover that sits behind the halves when open and becomes the spine when closed.
+  _spine() {
+    const R = SPEC.depth - 0.06, H = SPEC.height - 0.8, n = 14, e = 3;
+    // A squarish half-section: x across, z back from the hinge line.
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+      const a = (-90 + (180 * i) / n) * DEG, s = Math.sin(a), c = Math.cos(a);
+      pts.push([R * Math.sign(s) * Math.pow(Math.abs(s), 2 / e), -R * Math.pow(Math.abs(c), 2 / e)]);
+    }
     for (let i = 0; i < n; i++) {
-      const a = -span + (2 * span * (i + 0.5)) / n, chord = 2 * R * Math.sin((span / n) * DEG) + 0.12;
-      const at = [R * Math.sin(a * DEG), 0, -R * Math.cos(a * DEG)];
-      this._piece('wall', 'spine', { local: { strip: { a, R, chord, H } }, normal: [Math.sin(a * DEG), 0, -Math.cos(a * DEG)], at, metal: 0.9 });
+      const [ax, az] = pts[i], [bx, bz] = pts[i + 1];
+      const len = Math.hypot(bx - ax, bz - az), mx = (ax + bx) / 2, mz = (az + bz) / 2;
+      const nx = (bz - az) / len, nz = -(bx - ax) / len;   // outward, away from the hinge line
+      this._piece('wall', 'spine', { local: { strip: { mx, mz, chord: len + 0.1, H, theta: Math.atan2(nx, nz) / DEG } },
+        normal: [nx, 0, nz], at: [mx, 0, mz], paint: 'hinge', mat: MATTE });
     }
     for (const end of [-1, 1]) {
-      this._piece('cap', 'spine', { local: { cap: { R, y: (end * H) / 2, end } }, normal: [0, end, 0], at: [0, (end * H) / 2, -R / 2], metal: 0.8 });
+      this._piece('cap', 'spine', { local: { cap: { R, y: (end * H) / 2, end, pts } }, normal: [0, end, 0], at: [0, (end * H) / 2, -R / 2], paint: 'hinge', mat: MATTE });
     }
   }
 
@@ -571,6 +646,7 @@ export class UnfoldDevice extends HTMLElement {
       const current = s.media.firstElementChild;
       if (current && current.getAttribute('src') === src) { if (current.tagName === 'VIDEO') videos.push([s, current]); continue; }
       s.media.replaceChildren();
+      s.aspect = 0;
       s.screen.style.background = src ? 'transparent' : '';
       if (!src) continue;
       let node;
@@ -579,15 +655,17 @@ export class UnfoldDevice extends HTMLElement {
         node = document.createElement('video');
         node.muted = true; node.loop = true; node.playsInline = true; node.autoplay = true;
         node.setAttribute('muted', ''); node.setAttribute('playsinline', '');
+        node.addEventListener('loadedmetadata', () => { s.aspect = node.videoWidth / node.videoHeight; this._orient(); });
         videos.push([s, node]);
       } else {
         node = document.createElement('img');
         node.alt = ''; node.decoding = 'async'; node.draggable = false;
+        node.addEventListener('load', () => { s.aspect = node.naturalWidth / node.naturalHeight; this._orient(); });
       }
       node.setAttribute('src', src);
       s.media.append(node);
     }
-    // The inner display is two videos, one per half: the left half follows the right.
+    // The inner screen is two videos, one per half: the left half follows the right.
     const inner = videos.filter(([s]) => s.kind === 'inner');
     if (inner.length === 2) {
       const follower = inner.find(([s]) => s.follower)[1], leader = inner.find(([s]) => !s.follower)[1];
@@ -602,58 +680,79 @@ export class UnfoldDevice extends HTMLElement {
     this._orient();
   }
 
-  // orientation="portrait": the open phone turns on its side as it unfolds, and the inner picture stands upright.
+  // A picture that is the other way round to its screen (a portrait shot on the open inner screen, or a landscape
+  // one on the cover) is turned a quarter, so it stands upright when the phone is held that way.
   _orient() {
-    const portrait = this.getAttribute('orientation') === 'portrait' && this._folds;
     for (const s of this._screens || []) {
-      const node = s.kind === 'inner' && s.media.firstElementChild;
+      const node = s.media.firstElementChild;
       if (!node) continue;
-      Object.assign(node.style, portrait
-        ? { inset: 'auto', left: '50%', top: '50%', width: `${s.h * this._k}px`, height: `${s.w * this._k}px`, transform: 'translate(-50%, -50%) rotate(-90deg)' }
+      const turn = s.aspect > 0 && (s.aspect > 1) !== (s.w > s.h);
+      Object.assign(node.style, turn
+        ? { inset: 'auto', left: '50%', top: '50%', width: `${s.h * this._k}px`, height: `${s.w * this._k}px`, transform: `translate(-50%, -50%) rotate(${s.kind === 'inner' ? 90 : -90}deg)` }
         : { inset: '', left: '', top: '', width: '', height: '', transform: '' });
     }
   }
 
-  // ---------- layout: whenever the size, model or finish changes ----------
+  _fillLogo() {
+    if (!this._logo) return;
+    const src = this.getAttribute('logo');
+    this._logo.hidden = !src;
+    if (src) this._logo.src = src; else this._logo.removeAttribute('src');
+  }
+
+  // ---------- layout: whenever the size or finish changes ----------
 
   _layout() {
     if (!this._world) return;
-    const spec = this._spec, w = this.clientWidth, h = this.clientHeight;
+    const w = this.clientWidth, h = this.clientHeight;
     if (!w || !h) return;
-    const portrait = this.getAttribute('orientation') === 'portrait' && this._folds;
-    let sw = spec.foldable ? spec.width * 2 : spec.height * 0.62, sh = spec.height;
-    if (portrait) sw = sh = Math.max(sw, sh);
-    const k = (this._k = (parseFloat(this.getAttribute('zoom')) || 1) * Math.min(w / (sw * 1.16), h / (sh * 1.3)));
-    this._eye = Math.max(sw, sh) * 3.4;   // viewer distance in mm
+    const sw = SPEC.width * 2, sh = SPEC.height;
+    // Sized so the open phone in landscape fills the element; other postures scale down to fit as they move.
+    const fit = Math.min(w / (sw * 1.16), h / (sh * 1.3));
+    const k = (this._k = (parseFloat(this.getAttribute('zoom')) || 1) * fit);
+    this._room = [w / fit, h / fit];
+    this._eye = sw * 3.4;   // viewer distance in mm
     this.shadowRoot.querySelector('.stage').style.perspective = `${(this._eye * k).toFixed(0)}px`;
 
-    const finish = FINISHES[this.getAttribute('finish')] || FINISHES.black;
-    const css = getComputedStyle(this), pick = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
-    this._metal = rgb(pick('--unfold-metal', finish.metal));
-    const paints = { back: pick('--unfold-back', finish.back), plateau: pick('--unfold-plateau', finish.plateau) };
+    const finish = FINISHES[this.getAttribute('finish')] || FINISHES['star-white'];
+    const style = getComputedStyle(this), pick = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
+    this._colors = {
+      metal: rgb(pick('--unfold-metal', finish.metal)),
+      back: rgb(pick('--unfold-back', finish.back)),
+      hinge: rgb(pick('--unfold-hinge', finish.hinge)),
+      ring: rgb(pick('--unfold-ring', finish.ring)),
+    };
     const px = v => `${(v * k).toFixed(3)}px`;
 
     for (const p of this._pieces) {
       const s = p.el.style, L = p.local;
-      if (L.face) {
-        const { cx, z, w: fw, h: fh, turned } = L.face;
-        Object.assign(s, { width: px(fw), height: px(fh), borderRadius: p.radii.map(px).join(' ') });
-        p.css = `translate3d(${px(cx)}, 0px, ${px(z)})${turned ? ' rotateY(180deg)' : ''} translate(${px(-fw / 2)}, ${px(-fh / 2)})`;
+      if (L.flat) {
+        const { cx, cy, z, w: fw, h: fh, turned } = L.flat;
+        Object.assign(s, { width: px(fw), height: px(fh), borderRadius: p.radii ? p.radii.map(px).join(' ') : '' });
+        p.css = `translate3d(${px(cx)}, ${px(cy)}, ${px(z)})${turned ? ' rotateY(180deg)' : ''} translate(${px(-fw / 2)}, ${px(-fh / 2)})`;
       } else if (L.wall) {
-        const { mx, my, len, ang, t } = L.wall, ww = len + 0.08;
+        const { mx, my, z, len, ang, t } = L.wall, ww = len + 0.08;
         Object.assign(s, { width: px(ww), height: px(t) });
-        p.css = `translate3d(${px(mx)}, ${px(my)}, ${px(-t / 2)}) rotateZ(${ang}deg) rotateX(90deg) translate(${px(-ww / 2)}, ${px(-t / 2)})`;
+        p.css = `translate3d(${px(mx)}, ${px(my)}, ${px(z)}) rotateZ(${ang}deg) rotateX(90deg) translate(${px(-ww / 2)}, ${px(-t / 2)})`;
       } else if (L.knob) {
-        const { x, y, len, t, dir } = L.knob;
-        Object.assign(s, { width: px(t), height: px(len), borderRadius: px(Math.min(t, len) / 2) });
-        p.css = `translate3d(${px(x)}, ${px(y)}, ${px(-spec.depth / 2)}) rotateY(${dir * 90}deg) translate(${px(-t / 2)}, ${px(-len / 2)})`;
+        const { x, y, z, len, t, axis } = L.knob;
+        if (axis === 'y-') {
+          Object.assign(s, { width: px(len), height: px(t), borderRadius: px(t / 2) });
+          p.css = `translate3d(${px(x)}, ${px(y)}, ${px(z)}) rotateX(90deg) translate(${px(-len / 2)}, ${px(-t / 2)})`;
+        } else {
+          Object.assign(s, { width: px(t), height: px(len), borderRadius: px(t / 2) });
+          p.css = `translate3d(${px(x)}, ${px(y)}, ${px(z)}) rotateY(90deg) translate(${px(-t / 2)}, ${px(-len / 2)})`;
+        }
+        if (p.control) s.border = `${px(0.35)} solid ${paint(this._colors.metal)}`;
       } else if (L.strip) {
-        const { a, R, chord, H } = L.strip;
+        const { mx, mz, chord, H, theta } = L.strip;
         Object.assign(s, { width: px(chord), height: px(H) });
-        p.css = `translate3d(${px(R * Math.sin(a * DEG))}, 0px, ${px(-R * Math.cos(a * DEG))}) rotateY(${180 - a}deg) translate(${px(-chord / 2)}, ${px(-H / 2)})`;
+        p.css = `translate3d(${px(mx)}, 0px, ${px(mz)}) rotateY(${theta}deg) translate(${px(-chord / 2)}, ${px(-H / 2)})`;
       } else if (L.cap) {
-        const { R, y, end } = L.cap;
-        Object.assign(s, { width: px(2 * R), height: px(R), borderRadius: end > 0 ? `0 0 ${px(R)} ${px(R)}` : `${px(R)} ${px(R)} 0 0` });
+        const { R, y, end, pts } = L.cap;
+        Object.assign(s, { width: px(2 * R), height: px(R) });
+        // The cap is the spine's section: x across, and depth back from the hinge line.
+        s.clipPath = `polygon(${pts.map(([x, z]) => `${px(x + R)} ${px(end > 0 ? -z : z + R)}`).join(', ')})`;
         p.css = end > 0 ? `translate3d(0px, ${px(y)}, 0px) rotateX(-90deg) translate(${px(-R)}, 0px)`
           : `translate3d(0px, ${px(y)}, 0px) rotateX(90deg) translate(${px(-R)}, ${px(-R)})`;
       }
@@ -662,19 +761,14 @@ export class UnfoldDevice extends HTMLElement {
       const s = b.el.style;
       Object.assign(s, { left: px(b.box.x), top: px(b.box.y), width: px(b.box.w), height: px(b.box.h) });
       if (b.radii) s.borderRadius = b.radii.map(px).join(' ');
-      if (b.paint === 'back') s.background = paints.back;
-      if (b.frame) Object.assign(s, { boxSizing: 'border-box', borderStyle: 'solid', borderWidth: b.frame.map(on => (on ? px(spec.rim + 0.3) : '0')).join(' ') });
+      if (b.blur) s.filter = `blur(${px(b.blur)})`;
+      if (b.frame) Object.assign(s, { boxSizing: 'border-box', borderStyle: 'solid', borderWidth: b.frame.map(on => (on ? px(SPEC.rim + 0.3) : '0')).join(' ') });
       if (b.hingeGlass) {
         // Black everywhere except a strip along the hinge behind the picture; the bezel bands still run across.
         const { left, top, bottom } = b.hingeGlass, g = '#020203';
         s.background = `linear-gradient(${g}, ${g}) top / 100% ${px(top + 0.3)} no-repeat, linear-gradient(${g}, ${g}) bottom / 100% ${px(bottom + 0.3)} no-repeat, `
           + `linear-gradient(to ${left ? 'right' : 'left'}, transparent ${px(4)}, ${g} ${px(4)})`;
       }
-      if (b.paint === 'plateau') {
-        s.background = paints.plateau;
-        s.boxShadow = `inset 0 ${px(0.3)} 0 rgba(255,255,255,.22), inset 0 ${px(-0.3)} 0 rgba(0,0,0,.28), 0 ${px(0.6)} ${px(1.6)} rgba(0,0,0,.35)`;
-      }
-      if (b.paint === 'lens') s.boxShadow = `0 0 0 ${px(0.5)} rgba(255,255,255,.14), 0 ${px(0.3)} ${px(0.8)} rgba(0,0,0,.6)`;
     }
     this._orient();
     this._last = '';
@@ -685,59 +779,70 @@ export class UnfoldDevice extends HTMLElement {
 
   _render() {
     if (!this._k) return;
-    const spec = this._spec, k = this._k, { fold, yaw, pitch } = this._state;
-    const foldable = !!spec.foldable;
-    const H = spec.height, t = spec.depth;
-    const roll = this._state.roll + (foldable && this.getAttribute('orientation') === 'portrait' ? 90 * (fold / 180) : 0);
-    const key = [fold, yaw, pitch, roll, k].map(v => v.toFixed(3)).join();
+    const k = this._k, { fold, yaw, pitch, roll, anchor, lean } = this._state;
+    const H = SPEC.height, t = SPEC.depth;
+    const key = [fold, yaw, pitch, roll, anchor, lean, k].map(v => v.toFixed(3)).join();
     if (key === this._last) return;
     this._last = key;
 
-    // The left half turns about the hinge axis, which sits half the closed gap in front of the screens.
-    const psi = foldable ? 180 - fold : 0, z0 = foldable ? spec.gap / 2 : 0;
-    const groups = {
-      base: { m: ry(0), at: p => p },
-      flap: { m: ry(psi), at: p => { const q = mul(ry(psi), [p[0], p[1], p[2] - z0]); return [q[0], q[1], q[2] + z0]; } },
-      spine: { m: ry(psi / 2), at: p => { const q = mul(ry(psi / 2), p); return [q[0], q[1], q[2] + z0]; } },
-    };
+    // Each half turns about the hinge line: the left half by psi. Then the whole phone turns about the hinge so the
+    // right part keeps still (a laptop's base stays on the table, a tent stands even), and rolls on the page.
+    const psi = 180 - fold, h = lean - anchor * psi;
+    const hold = mmul(rz(roll), ry(h));
+    const groups = { base: ry(0), flap: ry(psi), spine: ry(psi / 2) };
+    const place = (g, p) => mul(hold, mul(groups[g], p));
 
-    // Turn around the middle of the phone as it is right now.
+    // Turn around the middle of the phone as it is right now, and scale it down if this posture needs more room.
     const corners = [];
     for (const leaf of this._leaves) {
-      for (const x of [leaf.x0, leaf.x1]) for (const y of [-H / 2, H / 2]) for (const z of [-t, 0]) corners.push(groups[leaf.group].at([x, y, z]));
+      for (const x of [leaf.x0, leaf.x1]) for (const y of [-H / 2, H / 2]) for (const z of [-t, 0]) corners.push(place(leaf.group, [x, y, z]));
     }
-    const span = i => [Math.min(...corners.map(c => c[i])), Math.max(...corners.map(c => c[i]))];
-    const [xa, xb] = span(0), [za, zb] = span(2), cx = (xa + xb) / 2, cz = (za + zb) / 2;
-    const world = mmul(mmul(rx(pitch), ry(yaw)), rz(roll));
+    const lo = [0, 1, 2].map(i => Math.min(...corners.map(c => c[i]))), hi = [0, 1, 2].map(i => Math.max(...corners.map(c => c[i])));
+    const mid = lo.map((v, i) => (v + hi[i]) / 2);
+    const f = Math.min(1, this._room[0] / ((hi[0] - lo[0]) * 1.16), this._room[1] / ((hi[1] - lo[1]) * 1.3));
+    const view = mmul(rx(-pitch), ry(yaw));
+    const toView = p => mul(view, [p[0] - mid[0], p[1] - mid[1], p[2] - mid[2]]).map(v => v * f);
 
     const px = v => `${(v * k).toFixed(3)}px`;
-    const prefix = `rotateX(${pitch}deg) rotateY(${yaw}deg) rotateZ(${roll}deg) translate3d(${px(-cx)}, 0px, ${px(-cz)})`;
-    const css = {
-      base: prefix,
-      flap: `${prefix} translate3d(0px, 0px, ${px(z0)}) rotateY(${psi}deg) translate3d(0px, 0px, ${px(-z0)})`,
-      spine: `${prefix} translate3d(0px, 0px, ${px(z0)}) rotateY(${psi / 2}deg)`,
-    };
+    const fs = f.toFixed(4);
+    const prefix = `scale3d(${fs}, ${fs}, ${fs}) rotateX(${-pitch}deg) rotateY(${yaw}deg) `
+      + `translate3d(${px(-mid[0])}, ${px(-mid[1])}, ${px(-mid[2])}) rotateZ(${roll}deg) rotateY(${h}deg)`;
+    const cssFor = { base: prefix, flap: `${prefix} rotateY(${psi}deg)`, spine: `${prefix} rotateY(${psi / 2}deg)` };
+    const turnFor = {};
+    for (const g in groups) turnFor[g] = mmul(view, mmul(hold, groups[g]));
 
-    // Show only what faces the eye (perspective included), light the metal and slide the glare across the glass.
-    const eye = [0, 0, this._eye], closed = fold < 2, flat = fold > 172;
+    // Show only what faces the eye (perspective included), light every surface and slide the glare across the glass.
+    const eye = [0, 0, this._eye], closed = fold < 2, flat = fold > 172, C = this._colors;
+    const facing = (n, v) => dot(n, [eye[0] - v[0], eye[1] - v[1], eye[2] - v[2]]) / Math.hypot(eye[0] - v[0], eye[1] - v[1], eye[2] - v[2]);
+    // The camera stands on the back, so it only shows when the back is in view or nearly edge-on. (Safari would
+    // otherwise draw its sides through the screen.)
+    const backInView = facing(mul(turnFor.base, [0, 0, -1]), toView(place('base', [SPEC.width / 2, 0, -SPEC.depth]))) > -0.08;
+    // Likewise the spine sits behind the inner screen: when both halves of the screen face you, it is out of sight.
+    const screenInView = ['base', 'flap'].every(g => facing(mul(turnFor[g], [0, 0, 1]), toView(place(g, [g === 'base' ? 20 : -20, 0, 0]))) > 0);
     for (const p of this._pieces) {
-      const g = groups[p.group], n = mul(world, mul(g.m, p.normal)), a = g.at(p.at);
-      const v = mul(world, [a[0] - cx, a[1], a[2] - cz]);
-      let visible = dot(n, [eye[0] - v[0], eye[1] - v[1], eye[2] - v[2]]) > 0;
-      if (p.sandwiched && closed) visible = false;               // the inner display is shut
-      if ((p.hingeWall || p.group === 'spine') && flat) visible = false;
-      if (p.hingeWall && closed) visible = false;
+      const n = mul(turnFor[p.group], p.normal), v = toView(place(p.group, p.at));
+      let visible = facing(n, v) > 0;
+      if (p.sandwiched && closed) visible = false;               // the inner screen is shut
+      if (p.group === 'spine' && (flat || screenInView)) visible = false;
+      if (p.onBack && !backInView) visible = false;
       const s = p.el.style;
       s.visibility = visible ? 'visible' : 'hidden';
       if (!visible) continue;
-      s.transform = `${css[p.group]} ${p.css}`;
-      if (p.metal) s.background = shade(p.metal === 1 ? this._metal : this._metal.map(c => c * p.metal), n);
-      else if (p.face) {
-        p.metalEl.style[p.frame ? 'borderColor' : 'background'] = shade(this._metal, n);
+      s.transform = `${cssFor[p.group]} ${p.css}`;
+      if (p.face) {
+        p.metalEl.style[p.frame ? 'borderColor' : 'background'] = paint(light(C.metal, n, POLISHED));
+        if (p.backEl) p.backEl.style.background = paint(light(C.back, n, GLASS));
         if (p.glare) {
           p.glare.style.backgroundPosition = `${(50 - n[0] * 140).toFixed(1)}% ${(50 - n[1] * 140).toFixed(1)}%`;
           p.glare.style.opacity = (0.35 + 0.65 * Math.max(0, n[2])).toFixed(3);
         }
+      } else if (p.paint && !p.control) {
+        const c = light(C[p.paint], n, p.mat, p.shade);
+        // The polished band is rounded front and back: it darkens towards both edges and catches a bright line.
+        if (p.edge) {
+          const tone = f => paint(c.map(x => Math.round(clamp(x * f + (f > 1 ? 24 : 0), 0, 255))));
+          s.background = `linear-gradient(${tone(0.62)}, ${tone(0.95)} 18%, ${tone(1.12)} 36%, ${tone(1)} 52%, ${tone(0.86)} 78%, ${tone(0.6)})`;
+        } else s.background = paint(c);
       }
     }
 
@@ -745,8 +850,8 @@ export class UnfoldDevice extends HTMLElement {
     const s = this._shadowEl.style;
     if (this.getAttribute('shadow') === 'none') s.display = 'none';
     else {
-      const view = corners.map(c => mul(world, [c[0] - cx, c[1], c[2] - cz]));
-      const xs = view.map(c => c[0]), width = (Math.max(...xs) - Math.min(...xs)) * k, bottom = Math.max(...view.map(c => c[1])) * k;
+      const seen = corners.map(toView);
+      const xs = seen.map(c => c[0]), width = (Math.max(...xs) - Math.min(...xs)) * k, bottom = Math.max(...seen.map(c => c[1])) * k;
       s.display = '';
       s.width = `${(width * 0.92).toFixed(1)}px`;
       s.height = `${(width * 0.11 + 8).toFixed(1)}px`;

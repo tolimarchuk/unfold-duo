@@ -1,7 +1,7 @@
 {
   "name": "unfold-device",
   "version": "0.1.0",
-  "description": "A foldable phone made of HTML and CSS 3D. Open it, close it and turn it around.",
+  "description": "iPhone Duo in HTML and CSS 3D: open it, fold it, turn it and pose it. One file, no dependencies.",
   "type": "module",
   "main": "unfold.js",
   "exports": {
@@ -15,8 +15,8 @@
     "web-component",
     "custom-element",
     "css-3d",
+    "iphone-duo",
     "foldable",
-    "phone",
     "mockup",
     "device-frame"
   ],

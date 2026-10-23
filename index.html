@@ -3,108 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Unfold: a foldable phone in HTML and CSS</title>
-<meta name="description" content="A foldable phone made of HTML and CSS 3D. Put your own screens on it, then open it, close it and turn it around. One file, no dependencies, MIT licensed.">
+<title>Unfold: iPhone Duo in HTML and CSS</title>
+<meta name="description" content="An iPhone Duo you can put on any web page. It opens, folds, turns and stands up like the real one, and shows your own screens. One file, no dependencies, MIT licensed.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6' width='12.6' height='20' rx='3' fill='%23111'/%3E%3Crect x='16.4' y='6' width='12.6' height='20' rx='3' fill='%23555'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 7.5 15.4 9.5v13L3 24.5z' fill='%231d1d1f'/%3E%3Cpath d='M29 7.5 16.6 9.5v13L29 24.5z' fill='%2386868b'/%3E%3C/svg%3E">
 <link rel="modulepreload" href="unfold.js">
 <style>
 :root {
-  --bg: #ececef; --ink: #0f1012; --muted: #5f636b; --faint: #8a8e96; --line: rgba(15, 16, 18, .1);
-  --card: #f6f6f8; --code: #f6f6f8; --thumb: #0f1012;
-  --c-tag: #a2402b; --c-attr: #5146ad; --c-str: #2c6d4c; --c-com: #8a8e96;
-  --gutter: max(16px, env(safe-area-inset-left)); --gutter-r: max(16px, env(safe-area-inset-right));
+  --bg: #f5f5f7; --surface: #fff; --ink: #1d1d1f; --muted: #6e6e73; --faint: #86868b; --line: rgba(0, 0, 0, .09);
+  --chip: rgba(0, 0, 0, .05); --code: #fbfbfd; --glow: #ffffff; --lift: 0 1px 2px rgba(0, 0, 0, .04), 0 12px 32px rgba(0, 0, 0, .07);
+  --c-tag: #b23c22; --c-attr: #4a3fb0; --c-str: #1f6b45; --c-com: #86868b;
+  --gutter: max(20px, env(safe-area-inset-left)); --gutter-r: max(20px, env(safe-area-inset-right));
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d0e10; --ink: #f1f2f4; --muted: #a2a6ad; --faint: #6e727a; --line: rgba(255, 255, 255, .1);
-    --card: #16171a; --code: #131417; --thumb: #f1f2f4;
-    --c-tag: #f2a690; --c-attr: #bab1ff; --c-str: #93d4b0; --c-com: #6e727a;
+    --bg: #000; --surface: #161617; --ink: #f5f5f7; --muted: #a1a1a6; --faint: #6e6e73; --line: rgba(255, 255, 255, .1);
+    --chip: rgba(255, 255, 255, .08); --code: #0e0e10; --glow: #1d1d20; --lift: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .5);
+    --c-tag: #ff9f8a; --c-attr: #b7aeff; --c-str: #8fdcb0; --c-com: #6e6e73;
   }
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 a { color: inherit; }
 code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
-.wrap { max-width: 1120px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid #0071e3; outline-offset: 2px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 
 /* Header */
-.top { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-.mark { font-weight: 700; letter-spacing: -0.02em; text-decoration: none; font-size: 18px; }
-.top nav { display: flex; gap: 22px; font-size: 15px; }
+.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: saturate(1.8) blur(20px); backdrop-filter: saturate(1.8) blur(20px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 52px; }
+.mark { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; letter-spacing: -0.01em; text-decoration: none; font-size: 17px; }
+.mark svg { width: 20px; height: 20px; }
+.top nav { display: flex; gap: 26px; font-size: 13px; }
 .top nav a { color: var(--muted); text-decoration: none; }
 .top nav a:hover { color: var(--ink); }
 
 /* Hero */
-.hero { text-align: center; padding-top: clamp(16px, 4vw, 40px); }
-h1 { margin: 0; font-size: clamp(52px, 8vw, 88px); line-height: .95; letter-spacing: -0.055em; font-weight: 750; }
-.lede { max-width: 600px; margin: 18px auto 0; font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); text-wrap: balance; }
-.stage { position: relative; margin: clamp(8px, 3vw, 28px) auto 0; border-radius: 28px; }
-.stage.over { outline: 2px dashed var(--faint); outline-offset: -2px; }
-#phone { width: 100%; height: clamp(320px, calc(100svh - 360px), 780px); }
-.hint { margin: 0; font-size: 14px; color: var(--faint); }
-.hint b { font-weight: 500; color: var(--muted); }
+.hero { text-align: center; padding-top: clamp(28px, 4.5vw, 56px); background: radial-gradient(70% 55% at 50% 58%, var(--glow) 0, var(--bg) 72%); }
+.eyebrow { margin: 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+h1 { margin: 6px 0 0; font-size: clamp(56px, 10vw, 112px); line-height: .95; letter-spacing: -0.045em; font-weight: 700; }
+.lede { max-width: 620px; margin: 18px auto 0; font-size: clamp(18px, 2.3vw, 22px); line-height: 1.38; color: var(--muted); text-wrap: balance; letter-spacing: -0.01em; }
+.stage { position: relative; margin: 0 auto; border-radius: 32px; transition: background .2s; }
+.stage.over { background: var(--chip); outline: 2px dashed var(--faint); outline-offset: -8px; }
+#phone { width: 100%; height: clamp(360px, calc(100svh - 370px), 780px); --unfold-shadow: .26; }
+.hint { margin: 0; font-size: 13px; color: var(--faint); }
 .hint .touch { display: none; }
 @media (hover: none) { .hint .mouse { display: none; } .hint .touch { display: inline; } }
 
-/* Controls */
-.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; margin: 26px auto 0; max-width: 860px; }
-.btn, .seg button { font: inherit; font-size: 14px; font-weight: 550; color: var(--ink); height: 36px; padding: 0 16px; border-radius: 999px; cursor: pointer;
-  background: var(--card); border: 1px solid var(--line); -webkit-tap-highlight-color: transparent; }
-.btn:hover, .seg button:hover { border-color: color-mix(in srgb, var(--ink) 25%, transparent); }
-.btn:disabled, .seg button:disabled { opacity: .4; cursor: default; }
-.btn:focus-visible, .seg button:focus-visible, .range:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); }
-.seg button { height: 28px; padding: 0 13px; border: 0; background: transparent; color: var(--muted); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-.hingebox { display: inline-flex; align-items: center; gap: 12px; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 14px; font-weight: 550; }
-.hingebox output { width: 36px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
-.range { -webkit-appearance: none; appearance: none; width: 150px; height: 20px; margin: 0; background: transparent; cursor: pointer; --p: 1; }
-.range::-webkit-slider-runnable-track { height: 3px; border-radius: 3px; background: linear-gradient(to right, var(--ink) calc(var(--p) * 100%), var(--line) 0); }
-.range::-moz-range-track { height: 3px; border-radius: 3px; background: linear-gradient(to right, var(--ink) calc(var(--p) * 100%), var(--line) 0); }
-.range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6.5px; border-radius: 50%; background: var(--thumb); border: 0; }
-.range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--thumb); border: 0; }
-.range:disabled { opacity: .4; cursor: default; }
-.break { flex-basis: 100%; height: 0; }
+/* Dock */
+.dock { display: inline-flex; gap: 2px; margin-top: 18px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--lift); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.dock::-webkit-scrollbar { display: none; }
+.dock button { flex: none; display: grid; justify-items: center; gap: 4px; min-width: 84px; padding: 9px 10px 8px; white-space: nowrap; border: 0; border-radius: 16px; background: transparent; cursor: pointer; color: var(--faint); font-size: 12px; font-weight: 600; letter-spacing: -0.005em; }
+.dock button:hover { color: var(--ink); }
+.dock button[aria-pressed="true"] { background: var(--chip); color: var(--ink); }
+.dock svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.dock svg .fill { fill: currentColor; fill-opacity: .14; }
+.tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 12px; margin: 14px auto 0; }
+.pill { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; font-weight: 550; cursor: pointer; }
+.pill:hover { border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+.pill:disabled { opacity: .45; cursor: default; }
+.pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.swatches { display: inline-flex; gap: 6px; padding: 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.swatches button { width: 28px; height: 28px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14), inset 0 -6px 10px rgba(0, 0, 0, .1); position: relative; }
+.swatches button[aria-pressed="true"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--ink); }
+.hingebox { cursor: default; gap: 12px; }
+.hingebox output { width: 34px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.range { -webkit-appearance: none; appearance: none; width: 130px; height: 20px; margin: 0; background: transparent; cursor: pointer; --p: 1; }
+.range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(to right, var(--ink) calc(var(--p) * 100%), var(--line) 0); }
+.range::-moz-range-track { height: 4px; border-radius: 4px; background: linear-gradient(to right, var(--ink) calc(var(--p) * 100%), var(--line) 0); }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, .12), 0 2px 6px rgba(0, 0, 0, .2); }
+.range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, .12), 0 2px 6px rgba(0, 0, 0, .2); }
 
 /* Sections */
-section { padding-top: clamp(72px, 11vw, 128px); }
-h2 { margin: 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.035em; line-height: 1.1; font-weight: 700; }
-.sub { margin: 12px 0 0; max-width: 620px; color: var(--muted); }
-h3 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+section { padding-top: clamp(88px, 12vw, 150px); }
+.head { max-width: 760px; }
+h2 { margin: 0; font-size: clamp(32px, 5vw, 56px); letter-spacing: -0.035em; line-height: 1.04; font-weight: 700; }
+.sub { margin: 14px 0 0; max-width: 640px; font-size: clamp(17px, 2vw, 20px); line-height: 1.42; color: var(--muted); letter-spacing: -0.005em; }
+h3 { margin: 0; font-size: 17px; letter-spacing: -0.015em; font-weight: 650; }
 
-.steps > *, .ref > *, .poses > * { min-width: 0; }
+/* Postures */
+.postures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 44px; }
+.posture { margin: 0; background: var(--surface); border-radius: 24px; padding: 8px 8px 18px; border: 1px solid var(--line); }
+.posture unfold-device { aspect-ratio: 1 / 1; --unfold-shadow: .2; }
+.posture figcaption { padding: 0 12px; }
+.posture code { display: block; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
 
-/* Poses */
-.poses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
-.pose { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 6px 6px 16px; }
-.pose unfold-device { aspect-ratio: 4 / 3; --unfold-shadow: .22; }
-.pose figcaption { padding: 0 12px; }
-.pose code { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+/* Specs */
+.specs { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: center; margin-top: 36px; }
+.specs .shot { background: radial-gradient(60% 55% at 50% 50%, var(--glow), var(--bg) 75%); border-radius: 28px; }
+.specs unfold-device { aspect-ratio: 1 / 1; }
+dl { margin: 0; display: grid; gap: 0; }
+dl div { padding: 18px 0; border-bottom: 1px solid var(--line); }
+dl div:first-child { border-top: 1px solid var(--line); }
+dt { font-size: 13px; font-weight: 600; color: var(--faint); letter-spacing: .01em; }
+dd { margin: 4px 0 0; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+dd span { display: block; margin-top: 2px; font-size: 15px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
 
 /* Code */
-.steps { display: grid; gap: 34px; margin-top: 36px; counter-reset: step; }
+.steps { display: grid; gap: 38px; margin-top: 40px; counter-reset: step; }
 .step h3 { display: flex; align-items: baseline; gap: 10px; }
 .step h3::before { counter-increment: step; content: counter(step); font-size: 13px; font-weight: 600; color: var(--faint); font-variant-numeric: tabular-nums; }
-.step p { margin: 6px 0 0; color: var(--muted); max-width: 640px; }
+.step p { margin: 6px 0 0; color: var(--muted); max-width: 660px; }
 .code { position: relative; margin-top: 14px; }
-pre { margin: 0; padding: 18px 20px; overflow-x: auto; background: var(--code); border: 1px solid var(--line); border-radius: 16px; font-size: 14px; line-height: 1.6; tab-size: 2; }
-.copy { position: absolute; top: 10px; right: 10px; height: 28px; padding: 0 11px; font-size: 12.5px; }
+pre { margin: 0; padding: 20px 22px; overflow-x: auto; background: var(--code); border: 1px solid var(--line); border-radius: 18px; font-size: 14px; line-height: 1.65; tab-size: 2; }
+.copy { position: absolute; top: 11px; right: 11px; height: 28px; padding: 0 12px; font-size: 12.5px; }
 .t-tag { color: var(--c-tag); } .t-attr { color: var(--c-attr); } .t-str { color: var(--c-str); } .t-com { color: var(--c-com); } .t-kw { color: var(--c-tag); }
 
 /* Reference */
-.ref { margin-top: 40px; display: grid; gap: 44px; }
+.ref { margin-top: 44px; display: grid; gap: 52px; }
 table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 15px; }
-th { text-align: left; font-size: 12.5px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; padding: 0 16px 10px 0; border-bottom: 1px solid var(--line); }
-td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--muted); }
+th { text-align: left; font-size: 12px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; padding: 0 16px 10px 0; border-bottom: 1px solid var(--line); }
+td { padding: 13px 16px 13px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--muted); }
 td:first-child { white-space: nowrap; color: var(--ink); }
-td code, p code, li code { font-size: .88em; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; }
-td:first-child code { background: none; border: 0; padding: 0; font-size: 14px; }
-.notes { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 720px; color: var(--muted); }
+td code, p code, li code { font-size: .88em; background: var(--chip); border-radius: 6px; padding: 1px 6px; }
+td:first-child code { background: none; padding: 0; font-size: 14px; }
+.note { margin: 14px 0 0; font-size: 15px; color: var(--muted); }
+.notes { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 760px; color: var(--muted); }
 
 /* Footer: the same one as voicecanv.as and trymeth.com */
-.foot { display: grid; gap: 4px; justify-items: center; text-align: center; margin-top: clamp(80px, 12vw, 140px); border-top: 1px solid var(--line);
+.foot { display: grid; gap: 4px; justify-items: center; text-align: center; margin-top: clamp(96px, 13vw, 160px); border-top: 1px solid var(--line);
   padding-block: 40px calc(40px + env(safe-area-inset-bottom, 0px)); padding-left: var(--gutter); padding-right: var(--gutter-r); }
 .foot p { margin: 0; }
 .foot .about { font-size: 14px; color: var(--muted); margin-bottom: 6px; text-wrap: balance; }
@@ -114,19 +133,24 @@ td:first-child code { background: none; border: 0; padding: 0; font-size: 14px; 
 .foot-line b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
 .maker { display: inline-flex; align-items: center; gap: 8px; }
 .maker img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
-.foot .fine { font-size: 12.5px; color: var(--faint); margin-top: 4px; }
+.foot .fine { font-size: 12px; color: var(--faint); margin-top: 4px; }
 
-@media (max-width: 860px) {
-  .poses { grid-template-columns: repeat(2, 1fr); }
+.steps > *, .ref > *, .postures > *, .specs > * { min-width: 0; }
+@media (max-width: 980px) {
+  .postures { grid-template-columns: repeat(2, 1fr); }
+  .specs { grid-template-columns: 1fr; }
 }
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   body { font-size: 16px; }
-  .top nav { gap: 16px; }
+  .top nav { gap: 18px; }
   .top nav .wide { display: none; }
   #phone { height: auto; aspect-ratio: 1 / 1; }
-  .poses { grid-template-columns: 1fr; }
-  .break { display: none; }
-  .range { width: 120px; }
+  .dock { margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter-r)); border-radius: 0; border-left: 0; border-right: 0; max-width: 100vw; }
+  .dock button { min-width: 76px; }
+  .range { width: 110px; }
+  .postures { gap: 10px; }
+  .posture { border-radius: 20px; padding: 4px 4px 14px; }
+  .posture figcaption { padding: 0 8px; }
   pre { font-size: 13px; padding: 16px; }
   table, tbody, tr, td { display: block; }
   thead { display: none; }
@@ -137,75 +161,100 @@ td:first-child code { background: none; border: 0; padding: 0; font-size: 14px; 
 </head>
 <body>
 
-<header class="wrap top">
-  <a class="mark" href="#">Unfold</a>
-  <nav>
-    <a class="wide" href="#poses">Poses</a>
-    <a href="#use">Use it</a>
-    <a href="#reference">Reference</a>
-    <a href="unfold.js" download>Download</a>
-  </nav>
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 7.5 15.4 9.5v13L3 24.5z" fill="currentColor"/><path d="M29 7.5 16.6 9.5v13L29 24.5z" fill="currentColor" opacity=".45"/></svg>Unfold</a>
+    <nav>
+      <a class="wide" href="#postures">Postures</a>
+      <a class="wide" href="#measured">Details</a>
+      <a href="#use">Use it</a>
+      <a href="#reference">Reference</a>
+      <a href="unfold.js" download>Download</a>
+    </nav>
+  </div>
 </header>
 
 <main>
-  <div class="wrap hero">
-    <h1>Unfold</h1>
-    <p class="lede">A foldable phone made of HTML and CSS. Put your own screens on it, then open it, close it and turn it around.</p>
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Open-source web component</p>
+      <h1>Unfold</h1>
+      <p class="lede">An iPhone Duo you can put on any web page. It opens, folds, turns and stands up like the real one, and shows your own screens.</p>
 
-    <div class="stage" id="stage">
-      <unfold-device id="phone" interactive fold="0" yaw="-30" pitch="10"
-        inner="demo/inner-landscape.webp" cover="demo/cover.webp" front="demo/front.webp"></unfold-device>
-    </div>
-    <p class="hint"><span class="mouse">Drag to turn it, click to flip it. <b>Drop a screenshot or video on it</b> to see your own.</span><span class="touch">Drag sideways to turn it, tap to flip it.</span></p>
+      <div class="stage" id="stage">
+        <unfold-device id="phone" interactive posture="closed" yaw="-30"
+          inner="demo/inner-landscape.webp" cover="demo/cover.webp"></unfold-device>
+      </div>
+      <p class="hint"><span class="mouse">Drag to turn it, click to flip it, or drop a screenshot on it.</span><span class="touch">Drag sideways to turn it, tap to flip it.</span></p>
 
-    <div class="controls">
-      <button class="btn" id="fold" type="button">Open</button>
-      <button class="btn" id="flip" type="button">Flip</button>
-      <button class="btn" id="spin" type="button">Spin</button>
-      <label class="hingebox">Hinge
-        <input class="range" id="hinge" type="range" min="0" max="180" step="1" value="0" aria-label="Hinge angle">
-        <output id="hinge-out" for="hinge">0°</output>
-      </label>
-      <span class="break"></span>
-      <span class="seg" role="group" aria-label="Model" data-attr="model">
-        <button type="button" data-value="foldable" aria-pressed="true">Foldable</button>
-        <button type="button" data-value="bar" aria-pressed="false">Regular</button>
-      </span>
-      <span class="seg" role="group" aria-label="Orientation" data-attr="orientation">
-        <button type="button" data-value="landscape" aria-pressed="true">Landscape</button>
-        <button type="button" data-value="portrait" aria-pressed="false">Portrait</button>
-      </span>
-      <span class="seg" role="group" aria-label="Finish" data-attr="finish">
-        <button type="button" data-value="black" aria-pressed="true">Black</button>
-        <button type="button" data-value="silver" aria-pressed="false">Silver</button>
-      </span>
-      <button class="btn" id="pick" type="button">Use your screenshot</button>
-      <input id="file" type="file" accept="image/*,video/*" hidden>
+      <div class="dock" role="group" aria-label="Posture" id="dock">
+        <button type="button" data-posture="closed" aria-pressed="false"><svg viewBox="0 0 30 30"><rect class="fill" x="10" y="5" width="11" height="20" rx="2.6"/><path d="M10 7.5v15"/></svg>Closed</button>
+        <button type="button" data-posture="landscape" aria-pressed="false"><svg viewBox="0 0 30 30"><rect class="fill" x="3" y="7" width="24" height="16" rx="2.6"/><path d="M15 7v16" stroke-dasharray="1.5 2"/></svg>Landscape</button>
+        <button type="button" data-posture="landscape-ajar" aria-pressed="false"><svg viewBox="0 0 30 30"><path class="fill" d="M3 6 15 8.5v13L3 24z"/><path class="fill" d="M27 6 15 8.5v13L27 24z"/></svg>Landscape ajar</button>
+        <button type="button" data-posture="portrait" aria-pressed="false"><svg viewBox="0 0 30 30"><rect class="fill" x="7" y="3" width="16" height="24" rx="2.6"/><path d="M7 15h16" stroke-dasharray="1.5 2"/></svg>Portrait</button>
+        <button type="button" data-posture="portrait-ajar" aria-pressed="false"><svg viewBox="0 0 30 30"><path class="fill" d="M6 3 8.5 15h13L24 3z"/><path class="fill" d="M6 27 8.5 15h13L24 27z"/></svg>Portrait ajar</button>
+        <button type="button" data-posture="laptop" aria-pressed="false"><svg viewBox="0 0 30 30"><path class="fill" d="M7 4h16v12H7z"/><path class="fill" d="M7 16h16l4 8H3z"/></svg>Laptop</button>
+        <button type="button" data-posture="tent" aria-pressed="false"><svg viewBox="0 0 30 30"><path class="fill" d="M15 6 25 24H5z"/><path d="M15 6 11 24"/></svg>Tent</button>
+      </div>
+
+      <div class="tools">
+        <span class="swatches" role="group" aria-label="Finish">
+          <button type="button" data-finish="star-white" aria-pressed="true" title="Star White" aria-label="Star White" style="--sw:#f2f1ed"></button>
+          <button type="button" data-finish="night-sky" aria-pressed="false" title="Night Sky" aria-label="Night Sky" style="--sw:#47535f"></button>
+        </span>
+        <button class="pill" id="flip" type="button"><svg viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 0 1 9.6-3.7M13.5 8a5.5 5.5 0 0 1-9.6 3.7"/><path d="M12.4 1.8v2.7H9.7M3.6 14.2v-2.7h2.7"/></svg>Flip</button>
+        <button class="pill" id="spin" type="button"><svg viewBox="0 0 16 16"><path d="M13.5 8A5.5 5.5 0 1 1 11.4 3.7"/><path d="M11.7 1.2v2.7H9"/></svg>Spin</button>
+        <label class="pill hingebox">Hinge
+          <input class="range" id="hinge" type="range" min="0" max="180" step="1" value="0" aria-label="Hinge angle">
+          <output id="hinge-out" for="hinge">0°</output>
+        </label>
+        <button class="pill" id="pick" type="button"><svg viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="m2.5 11 3.2-3.2 2.6 2.6 1.6-1.6 3.6 3.6"/><circle cx="10.6" cy="5.8" r="1.1"/></svg>Your screenshot</button>
+        <input id="file" type="file" accept="image/*,video/*" hidden>
+      </div>
     </div>
   </div>
 
-  <section class="wrap" id="poses">
-    <h2>Any pose, from a few attributes</h2>
-    <p class="sub">Each of these is the same element. They all turn and flip too.</p>
-    <div class="poses">
-      <figure class="pose"><unfold-device interactive fold="0" yaw="-24" pitch="8"></unfold-device>
-        <figcaption><h3>Closed</h3><code></code></figcaption></figure>
-      <figure class="pose"><unfold-device interactive fold="96" yaw="-36" pitch="12"></unfold-device>
-        <figcaption><h3>Half open</h3><code></code></figcaption></figure>
-      <figure class="pose"><unfold-device interactive fold="0" yaw="200" pitch="10" finish="silver"></unfold-device>
-        <figcaption><h3>The back, in silver</h3><code></code></figcaption></figure>
-      <figure class="pose"><unfold-device interactive orientation="portrait" fold="150" yaw="-22" pitch="8"></unfold-device>
-        <figcaption><h3>Portrait</h3><code></code></figcaption></figure>
-      <figure class="pose"><unfold-device interactive fold="180" yaw="-62" pitch="6" finish="silver"></unfold-device>
-        <figcaption><h3>Open, from the side</h3><code></code></figcaption></figure>
-      <figure class="pose"><unfold-device interactive model="bar" yaw="-20" pitch="8"></unfold-device>
-        <figcaption><h3>A regular phone</h3><code></code></figcaption></figure>
+  <section class="wrap" id="postures">
+    <div class="head">
+      <h2>Every way it stands.</h2>
+      <p class="sub">Seven postures, one attribute each. Every phone here turns and flips too.</p>
+    </div>
+    <div class="postures">
+      <figure class="posture"><unfold-device interactive posture="closed"></unfold-device><figcaption><h3>Closed</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="landscape"></unfold-device><figcaption><h3>Landscape</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="landscape-ajar"></unfold-device><figcaption><h3>Landscape ajar</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="portrait"></unfold-device><figcaption><h3>Portrait</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="portrait-ajar"></unfold-device><figcaption><h3>Portrait ajar</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="laptop" finish="night-sky"></unfold-device><figcaption><h3>Laptop</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="tent" finish="night-sky"></unfold-device><figcaption><h3>Tent</h3><code></code></figcaption></figure>
+      <figure class="posture"><unfold-device interactive posture="closed" yaw="200" pitch="10" finish="night-sky"></unfold-device><figcaption><h3>The back</h3><code></code></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="measured">
+    <div class="head">
+      <h2>Measured, not guessed.</h2>
+      <p class="sub">The body follows Apple's published dimensions. The camera, buttons and hole punch are measured from Apple's product photos.</p>
+    </div>
+    <div class="specs">
+      <div class="shot"><unfold-device id="detail" interactive posture="closed" yaw="205" pitch="12" zoom="1.18" inner="demo/inner-landscape.webp" cover="demo/cover.webp"></unfold-device></div>
+      <dl>
+        <div><dt>Open</dt><dd>164.6 × 117.8 mm</dd></div>
+        <div><dt>Closed</dt><dd>84.1 × 117.8 × 11.3 mm</dd></div>
+        <div><dt>Camera</dt><dd>Two 16 mm lenses on a 56.5 mm plateau<span>With the mic and flash at its inner end, top corner by the outer edge.</span></dd></div>
+        <div><dt>Buttons</dt><dd>Volume on top, Touch ID and Camera Control on the side</dd></div>
+        <div><dt>Cover screen</dt><dd>4.6 mm hole punch, top outer corner</dd></div>
+        <div><dt>Hinge</dt><dd>No line at the fold<span>Both halves of the inner screen turn about the fold itself, so the picture never breaks at any angle.</span></dd></div>
+        <div><dt>Finishes</dt><dd>Star White and Night Sky</dd></div>
+      </dl>
     </div>
   </section>
 
   <section class="wrap" id="use">
-    <h2>Add it to a page</h2>
-    <p class="sub">Copy <a href="unfold.js" download>unfold.js</a> into your project. It is a single ES module with no build step.</p>
+    <div class="head">
+      <h2>Add it to a page.</h2>
+      <p class="sub">Copy <a href="unfold.js" download>unfold.js</a> into your project. It is one ES module with no build step and no dependencies.</p>
+    </div>
     <div class="steps">
       <div class="step">
         <h3>Load the script</h3>
@@ -213,22 +262,23 @@ td:first-child code { background: none; border: 0; padding: 0; font-size: 14px; 
       </div>
       <div class="step">
         <h3>Add a phone</h3>
-        <p>Give it a picture or a video for each screen. The inner screen spans both halves when it is open.</p>
+        <p>Give each screen a picture or a video. The inner screen spans both halves, and a portrait shot on it turns to stand upright when the phone does.</p>
         <div class="code"><pre data-lang="html">&lt;unfold-device
   inner="open.png"
   cover="closed.png"
-  fold="0"
+  posture="landscape-ajar"
+  finish="night-sky"
   interactive&gt;
 &lt;/unfold-device&gt;</pre></div>
       </div>
       <div class="step">
         <h3>Move it</h3>
-        <p>Every method returns a promise, so steps can run one after another.</p>
+        <p>Every method returns a promise, so moves can follow one another.</p>
         <div class="code"><pre data-lang="js">const phone = document.querySelector('unfold-device');
 
-await phone.open();
+await phone.setPosture('closed');
+await phone.setPosture('laptop');
 await phone.animateTo({ yaw: 160, pitch: 14 }, { duration: 1200 });
-await phone.close();
 
 phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div>
       </div>
@@ -236,28 +286,27 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
   </section>
 
   <section class="wrap" id="reference">
-    <h2>Reference</h2>
+    <div class="head"><h2>Reference.</h2></div>
     <div class="ref">
       <div>
         <h3>Attributes</h3>
         <table>
           <thead><tr><th>Name</th><th>Values</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><code>fold</code></td><td>0 to 180</td><td>How far it is open. 0 is shut, 180 is flat. Default 180.</td></tr>
-            <tr><td><code>yaw</code></td><td>degrees</td><td>Turns it left or right. Default -18.</td></tr>
-            <tr><td><code>pitch</code></td><td>-90 to 90</td><td>Tips the top towards you or away. Default 8.</td></tr>
-            <tr><td><code>roll</code></td><td>degrees</td><td>Rotates it flat on the page. Default 0.</td></tr>
+            <tr><td><code>posture</code></td><td><code>closed</code>, <code>landscape</code>, <code>landscape-ajar</code>, <code>portrait</code>, <code>portrait-ajar</code>, <code>laptop</code>, <code>tent</code></td><td>How it is held. Changing it animates to the new posture. Default <code>landscape</code>.</td></tr>
             <tr><td><code>inner</code></td><td>URL</td><td>Image or video on the big inside screen.</td></tr>
             <tr><td><code>cover</code></td><td>URL</td><td>Image or video on the outside screen.</td></tr>
-            <tr><td><code>front</code></td><td>URL</td><td>Image or video on the screen of the regular phone.</td></tr>
-            <tr><td><code>model</code></td><td><code>foldable</code>, <code>bar</code></td><td>Which phone. <code>bar</code> is a regular one-piece phone.</td></tr>
-            <tr><td><code>finish</code></td><td><code>black</code>, <code>silver</code></td><td>The colour of the metal and the back.</td></tr>
-            <tr><td><code>orientation</code></td><td><code>landscape</code>, <code>portrait</code></td><td>In portrait the phone turns on its side as it opens, so the inside screen stands upright.</td></tr>
+            <tr><td><code>finish</code></td><td><code>star-white</code>, <code>night-sky</code></td><td>The colour of the frame, back and hinge.</td></tr>
+            <tr><td><code>fold</code></td><td>0 to 180</td><td>Angle between the two halves of the inner screen. 0 is shut, 180 is flat.</td></tr>
+            <tr><td><code>yaw</code></td><td>degrees</td><td>Turns it left or right.</td></tr>
+            <tr><td><code>pitch</code></td><td>-90 to 90</td><td>How far above it you look from. Below zero looks up at it.</td></tr>
+            <tr><td><code>roll</code></td><td>degrees</td><td>Turns it on the page.</td></tr>
             <tr><td><code>interactive</code></td><td>present or not</td><td>Drag to turn, click to flip, arrow keys to turn, F to fold.</td></tr>
             <tr><td><code>click</code></td><td><code>flip</code>, <code>fold</code>, <code>none</code></td><td>What a click does when it is interactive. Default <code>flip</code>.</td></tr>
+            <tr><td><code>logo</code></td><td>URL</td><td>A logo in the middle of the back. None by default.</td></tr>
             <tr><td><code>zoom</code></td><td>number</td><td>Scales the phone within the element. Default 1.</td></tr>
             <tr><td><code>shadow</code></td><td><code>none</code></td><td>Hides the shadow underneath.</td></tr>
-            <tr><td><code>label</code></td><td>text</td><td>What screen readers call it. Default "Foldable phone".</td></tr>
+            <tr><td><code>label</code></td><td>text</td><td>What screen readers call it. Default "iPhone Duo".</td></tr>
           </tbody>
         </table>
       </div>
@@ -266,6 +315,7 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
         <table>
           <thead><tr><th>Name</th><th>What it does</th></tr></thead>
           <tbody>
+            <tr><td><code>setPosture(name, options)</code></td><td>Moves to a posture. Same as setting the attribute, but returns a promise.</td></tr>
             <tr><td><code>open(options)</code></td><td>Unfolds it flat.</td></tr>
             <tr><td><code>close(options)</code></td><td>Folds it shut.</td></tr>
             <tr><td><code>toggle(options)</code></td><td>Opens it if it is mostly closed, closes it otherwise.</td></tr>
@@ -273,19 +323,19 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
             <tr><td><code>spin(turns, options)</code></td><td>Spins it one full turn, or <code>turns</code> turns. Negative spins the other way.</td></tr>
             <tr><td><code>animateTo(target, options)</code></td><td>Animates any of <code>fold</code>, <code>yaw</code>, <code>pitch</code> and <code>roll</code>. Options are <code>duration</code> in ms, <code>easing</code> (a CSS easing name or <code>cubic-bezier()</code>) and <code>delay</code>. Resolves <code>true</code> when it finishes, or <code>false</code> if something else moved it first.</td></tr>
             <tr><td><code>stop()</code></td><td>Stops every animation where it is.</td></tr>
-            <tr><td><code>setScreen(name, src)</code></td><td>Puts a URL, File or Blob on <code>inner</code>, <code>cover</code> or <code>front</code>. Handy for a file picker or a drop. <code>null</code> clears it.</td></tr>
+            <tr><td><code>setScreen(name, src)</code></td><td>Puts a URL, File or Blob on <code>inner</code> or <code>cover</code>. Handy for a file picker or a drop. <code>null</code> clears it.</td></tr>
             <tr><td><code>fold</code>, <code>yaw</code>, <code>pitch</code>, <code>roll</code></td><td>Read or set the pose right away, with no animation.</td></tr>
-            <tr><td><code>state</code></td><td>The current pose as one object.</td></tr>
+            <tr><td><code>posture</code>, <code>state</code></td><td>The last posture asked for, and the current pose as one object.</td></tr>
           </tbody>
         </table>
-        <p class="sub">Animations respect reduced motion: they jump straight to the end unless you pass <code>force: true</code>.</p>
+        <p class="note">Animations respect reduced motion: they jump straight to the end unless you pass <code>force: true</code>.</p>
       </div>
       <div>
         <h3>Events</h3>
         <table>
           <thead><tr><th>Name</th><th>When</th></tr></thead>
           <tbody>
-            <tr><td><code>change</code></td><td>Every time it moves. <code>event.detail</code> is the pose: <code>{ fold, yaw, pitch, roll }</code>.</td></tr>
+            <tr><td><code>change</code></td><td>Every time it moves. <code>event.detail</code> is the pose: <code>{ fold, yaw, pitch, roll, posture }</code>.</td></tr>
             <tr><td><code>activate</code></td><td>On a click, Enter or Space when it is interactive. <code>event.detail.action</code> says what it did.</td></tr>
           </tbody>
         </table>
@@ -295,46 +345,46 @@ phone.addEventListener('change', e =&gt; console.log(e.detail.fold));</pre></div
         <table>
           <thead><tr><th>Name</th><th>What it does</th></tr></thead>
           <tbody>
-            <tr><td><code>width</code>, <code>height</code></td><td>The element is a block, 16:10 by default. Size it however you like and the phone scales to fit.</td></tr>
-            <tr><td><code>--unfold-metal</code></td><td>Colour of the frame. Overrides the finish.</td></tr>
-            <tr><td><code>--unfold-back</code></td><td>Colour of the back glass.</td></tr>
-            <tr><td><code>--unfold-plateau</code></td><td>Colour of the camera bump.</td></tr>
+            <tr><td><code>width</code>, <code>height</code></td><td>The element is a block, 16:10 by default. Size it however you like and the phone scales to fit, in every posture.</td></tr>
+            <tr><td><code>--unfold-metal</code></td><td>Colour of the frame and buttons. Overrides the finish.</td></tr>
+            <tr><td><code>--unfold-back</code></td><td>Colour of the back glass and camera plateau.</td></tr>
+            <tr><td><code>--unfold-hinge</code>, <code>--unfold-ring</code></td><td>Colours of the hinge cover and the lens rings.</td></tr>
             <tr><td><code>--unfold-shadow</code></td><td>How dark the shadow is, 0 to 1. Default 0.3.</td></tr>
             <tr><td><code>::part()</code></td><td><code>stage</code>, <code>shadow</code>, <code>screen</code>, <code>back-glass</code> and <code>camera</code>.</td></tr>
           </tbody>
         </table>
       </div>
       <div>
-        <h3>Your own phone</h3>
-        <p class="sub">Models and finishes are plain objects, measured in millimetres. Add one, then use it by name.</p>
-        <div class="code"><pre data-lang="js">import { MODELS, addModel, addFinish } from './unfold.js';
+        <h3>Your own finishes and postures</h3>
+        <p class="note">Both are plain objects. Add one, then use it by name.</p>
+        <div class="code"><pre data-lang="js">import { addFinish, POSTURES } from './unfold.js';
 
-addFinish('blue', { metal: '#3d4b63', back: '#2b3547', plateau: '#232b39' });
-addModel('compact', { ...MODELS.bar, width: 67.6, height: 139.6 });</pre></div>
-        <div class="code"><pre data-lang="html">&lt;unfold-device model="compact" finish="blue" front="home.png"&gt;&lt;/unfold-device&gt;</pre></div>
+addFinish('sage', { metal: '#8d9a8a', back: '#b9c4b4', hinge: '#7f8a7c', ring: '#9aa697' });
+POSTURES.reading = { fold: 120, roll: 0, anchor: 0.5, lean: 0, yaw: -20, pitch: 10 };</pre></div>
+        <div class="code"><pre data-lang="html">&lt;unfold-device finish="sage" posture="reading"&gt;&lt;/unfold-device&gt;</pre></div>
       </div>
     </div>
   </section>
 
   <section class="wrap" id="notes">
-    <h2>Notes</h2>
+    <div class="head"><h2>Notes.</h2></div>
     <ul class="notes">
-      <li>The foldable is built to the published size of a book-style foldable: 164.6 by 117.8 mm open, 84.1 by 117.8 mm closed and 11.3 mm thick. It is a likeness, not an official model.</li>
-      <li>It is all plain elements and CSS transforms, worked out in JavaScript each frame. There is no canvas and no WebGL, so screens stay sharp at any size and videos play as they are.</li>
+      <li>It is all plain elements and CSS 3D transforms, worked out in JavaScript as it moves. There is no canvas and no WebGL, so screens stay sharp at any size and videos play as they are.</li>
+      <li>Each half is 5.65 mm deep so the phone closes to its real 11.3 mm. The real one is a little thinner open, where its hinge takes up the difference.</li>
       <li>Tested in Chrome and Safari, on desktop and on phones. On a touchscreen a sideways drag turns it and a vertical swipe still scrolls the page.</li>
-      <li>Free to use under the MIT license. Not affiliated with any phone maker.</li>
+      <li>Free to use under the MIT license. Not affiliated with Apple. iPhone and iPhone Duo are trademarks of Apple Inc.</li>
     </ul>
   </section>
 </main>
 
 <footer class="foot">
-  <p class="about">Unfold is a free web component for showing apps on a foldable phone.</p>
+  <p class="about">Unfold is a free web component for showing apps on iPhone Duo.</p>
   <p class="foot-line">
     <a class="maker" href="https://heysigna.com/?utm_source=unfold&amp;utm_medium=referral&amp;utm_campaign=unfold&amp;utm_content=footer"><img src="demo/maker.webp" width="22" height="22" alt="" loading="lazy" decoding="async">Built by Toli Marchuk at heysigna.com</a>
     <a href="https://x.com/tolimarchuk">@tolimarchuk on X</a>
     <a href="https://goalbuddy.dev">From the maker of GoalBuddy · <b>★ <span id="gb-stars">800+</span></b></a>
   </p>
-  <p class="fine">MIT licensed. Not affiliated with any phone maker.</p>
+  <p class="fine">MIT licensed. Not affiliated with Apple.</p>
 </footer>
 
 <script type="module">
@@ -343,28 +393,24 @@ import './unfold.js';
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const phone = $('#phone');
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ---------- screens ----------
+// The demo pictures follow the posture: an upright shot when the phone stands in portrait, a wide one on the cover
+// when it stands as a tent. A visitor's own file stays put.
 
-const demo = { cover: 'demo/cover.webp', front: 'demo/front.webp', landscape: 'demo/inner-landscape.webp', portrait: 'demo/inner-portrait.webp' };
-const own = new Set();   // screens showing the visitor's own file
+const demo = { wide: 'demo/inner-landscape.webp', tall: 'demo/inner-portrait.webp', cover: 'demo/cover.webp', coverWide: 'demo/cover-landscape.webp' };
+const own = new Set();
 
-function demoScreens(el) {
-  const portrait = el.getAttribute('orientation') === 'portrait';
-  if (!own.has('inner') || el !== phone) el.setAttribute('inner', portrait ? demo.portrait : demo.landscape);
-  if (!own.has('cover') || el !== phone) el.setAttribute('cover', demo.cover);
-  if (!own.has('front') || el !== phone) el.setAttribute('front', demo.front);
+function demoScreens(el, posture) {
+  const upright = /portrait|laptop/.test(posture);
+  if (!(el === phone && own.has('inner'))) el.setAttribute('inner', upright ? demo.tall : demo.wide);
+  if (!(el === phone && own.has('cover'))) el.setAttribute('cover', posture === 'tent' ? demo.coverWide : demo.cover);
 }
 
-// The screen in view right now, turning the phone to face you if its back is showing.
+// The screen in view right now, turning the phone to face you first if its back is showing.
 function screenInView() {
   const y = ((phone.yaw % 360) + 540) % 360 - 180;
-  if (Math.abs(y) > 90) {
-    const turn = ((-18 - y) % 360 + 540) % 360 - 180;
-    phone.animateTo({ yaw: phone.yaw + turn }, { duration: 900 });
-  }
-  if (phone.model === 'bar') return 'front';
+  if (Math.abs(y) > 90) phone.animateTo({ yaw: phone.yaw + ((((-18 - y) % 360) + 540) % 360 - 180) }, { duration: 900 });
   return phone.fold >= 90 ? 'inner' : 'cover';
 }
 
@@ -377,7 +423,6 @@ function useFile(file) {
 
 $('#pick').addEventListener('click', () => $('#file').click());
 $('#file').addEventListener('change', e => { useFile(e.target.files[0]); e.target.value = ''; });
-
 const stage = $('#stage');
 stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('over'); });
 stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) stage.classList.remove('over'); });
@@ -385,50 +430,40 @@ stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove
 
 // ---------- controls ----------
 
-const foldBtn = $('#fold'), hinge = $('#hinge'), hingeOut = $('#hinge-out');
-let heading = null;   // where the Open/Close button last sent the hinge
+const dock = $('#dock'), hinge = $('#hinge'), hingeOut = $('#hinge-out');
 
-function foldTo(fold, options) {
-  heading = fold;
-  foldBtn.textContent = fold >= 90 ? 'Close' : 'Open';
-  phone.animateTo({ fold }, { duration: 1300, ...options }).then(() => { if (heading === fold) heading = null; });
+function pose(name) {
+  for (const b of $$('button', dock)) b.setAttribute('aria-pressed', b.dataset.posture === name);
+  demoScreens(phone, name);
+  return phone.setPosture(name);
 }
 
-foldBtn.addEventListener('click', () => foldTo((heading ?? phone.fold) >= 90 ? 0 : 180));
+dock.addEventListener('click', e => { const b = e.target.closest('button'); if (b) pose(b.dataset.posture); });
 $('#flip').addEventListener('click', () => phone.flip());
 $('#spin').addEventListener('click', () => phone.spin());
-hinge.addEventListener('input', () => { heading = null; phone.fold = +hinge.value; });
+hinge.addEventListener('input', () => { phone.fold = +hinge.value; });
+for (const b of $$('.swatches button')) {
+  b.addEventListener('click', () => {
+    for (const x of $$('.swatches button')) x.setAttribute('aria-pressed', x === b);
+    phone.setAttribute('finish', b.dataset.finish);
+    $('#detail').setAttribute('finish', b.dataset.finish);
+  });
+}
 
 phone.addEventListener('change', e => {
   const { fold } = e.detail;
   hinge.value = fold;
   hinge.style.setProperty('--p', fold / 180);
   hingeOut.value = `${Math.round(fold)}°`;
-  if (heading === null) foldBtn.textContent = fold >= 90 ? 'Close' : 'Open';
 });
 
-for (const group of $$('.seg')) {
-  group.addEventListener('click', e => {
-    const button = e.target.closest('button');
-    if (!button || button.disabled) return;
-    for (const b of $$('button', group)) b.setAttribute('aria-pressed', b === button);
-    phone.setAttribute(group.dataset.attr, button.dataset.value);
-    if (group.dataset.attr === 'orientation') demoScreens(phone);
-    if (group.dataset.attr === 'model') {
-      const bar = button.dataset.value === 'bar';
-      foldBtn.disabled = hinge.disabled = bar;
-      for (const b of $$('[data-attr="orientation"] button')) b.disabled = bar;
-    }
-  });
-}
+// ---------- the phones further down ----------
 
-// ---------- the small phones ----------
-
-for (const figure of $$('.pose')) {
+for (const figure of $$('.posture')) {
   const el = $('unfold-device', figure);
-  const shown = ['model', 'orientation', 'fold', 'yaw', 'pitch', 'finish'].filter(n => el.hasAttribute(n)).map(n => `${n}="${el.getAttribute(n)}"`);
-  $('code', figure).textContent = `<unfold-device ${shown.join(' ')}>`;
-  demoScreens(el);
+  const shown = ['posture', 'yaw', 'pitch', 'finish'].filter(n => el.hasAttribute(n)).map(n => `${n}="${el.getAttribute(n)}"`);
+  $('code', figure).textContent = shown.join(' ');
+  demoScreens(el, el.getAttribute('posture'));
 }
 
 // ---------- code ----------
@@ -449,7 +484,7 @@ for (const pre of $$('pre[data-lang]')) {
   }
   pre.innerHTML = html + esc(text.slice(last));
   const copy = document.createElement('button');
-  copy.className = 'btn copy'; copy.type = 'button'; copy.textContent = 'Copy';
+  copy.className = 'pill copy'; copy.type = 'button'; copy.textContent = 'Copy';
   copy.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(text); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select and copy'; }
     setTimeout(() => (copy.textContent = 'Copy'), 1600);
@@ -457,10 +492,10 @@ for (const pre of $$('pre[data-lang]')) {
   pre.parentElement.append(copy);
 }
 
-// ---------- intro: closed, then it opens ----------
+// ---------- intro: closed, then it opens like a book ----------
 
-foldTo(180, { duration: reduce ? 0 : 1800, delay: 700 });
-phone.animateTo({ yaw: -16, pitch: 8 }, { duration: 2000, delay: 700 });
+pose('closed');
+setTimeout(() => pose('landscape-ajar'), 900);
 
 // GoalBuddy stars, cached for ten minutes. '800+' stays on any failure.
 (async () => {
