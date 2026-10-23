@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unfold share image</title>
+<style>
+html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+body { position: relative; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; color: #1d1d1f; -webkit-font-smoothing: antialiased;
+  background: radial-gradient(60% 75% at 72% 52%, #ffffff 0%, #f5f5f7 62%, #ececf0 100%); }
+.copy { position: absolute; left: 76px; top: 0; bottom: 0; width: 470px; display: flex; flex-direction: column; justify-content: center; }
+.eyebrow { font-size: 22px; font-weight: 600; color: #6e6e73; letter-spacing: -0.005em; }
+h1 { margin: 8px 0 0; font-size: 124px; line-height: .92; font-weight: 700; letter-spacing: -0.05em; }
+p { margin: 22px 0 0; max-width: 400px; text-wrap: balance; font-size: 30px; line-height: 1.22; font-weight: 500; letter-spacing: -0.02em; color: #424245; }
+.url { position: absolute; left: 76px; bottom: 52px; font-size: 22px; font-weight: 600; color: #86868b; letter-spacing: -0.005em; }
+unfold-device { position: absolute; left: 540px; top: 6px; width: 620px; height: 600px; aspect-ratio: auto; --unfold-shadow: .22; }
+</style>
+<script type="module" src="../unfold.js"></script>
+</head>
+<body>
+<div class="copy">
+  <div class="eyebrow">Open-source web component</div>
+  <h1>Unfold</h1>
+  <p>An iPhone Duo you can put on any web page.</p>
+</div>
+<div class="url">unfold.foo</div>
+<unfold-device posture="landscape-ajar" fold="132" yaw="-24" pitch="9" zoom="1" inner="../demo/inner-landscape.webp" cover="../demo/cover.webp"></unfold-device>
+</body>
+</html>

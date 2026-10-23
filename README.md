@@ -2,14 +2,16 @@
 
 An iPhone Duo you can put on any web page. It opens, folds, turns and stands up like the real one, and shows your own screens. One file, no dependencies.
 
+**Try it at [unfold.foo](https://unfold.foo).**
+
 ![iPhone Duo, open like a book](media/unfold.png)
 
 ## Use it
 
-Copy `unfold.js` into your project and load it as a module.
+Load it as a module, straight from unfold.foo or from your own copy of `unfold.js`.
 
 ```html
-<script type="module" src="unfold.js"></script>
+<script type="module" src="https://unfold.foo/unfold.js"></script>
 
 <unfold-device
   inner="open.png"
@@ -30,7 +32,7 @@ await phone.setPosture('laptop');
 await phone.animateTo({ yaw: 160, pitch: 14 }, { duration: 1200 });
 ```
 
-To see the demo page, serve this folder and open it:
+To run the demo page locally, serve this folder and open it:
 
 ```sh
 python3 -m http.server 5190

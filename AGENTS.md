@@ -9,6 +9,12 @@ An open-source web component, `<unfold-device>`: an iPhone Duo in CSS 3D that op
 - Look closely at the fold of the inner screen, flat and ajar, in Safari. Any line there is a regression.
 - Animations should hold 60 frames a second in both browsers.
 
+## Production
+
+- unfold.foo is a Cloudflare Worker that serves static files, set up in `cloudflare.config.ts` and `wrangler.config.ts`. The code is public at github.com/tolimarchuk/unfold-duo.
+- `npm run deploy` copies the page, `unfold.js` and the demo images into `dist/` and runs `cf deploy`. It needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` for the account that owns unfold.foo.
+- Other sites may load `https://unfold.foo/unfold.js` directly (`_headers` allows it), so changes to its attributes and methods must stay backwards compatible.
+
 ## Rules
 
 - iPhone Duo only. One file, no dependencies, no build step.
@@ -17,4 +23,4 @@ An open-source web component, `<unfold-device>`: an iPhone Duo in CSS 3D that op
 - Hide faces with the eye-point check in `_render`. Pieces behind the screen or on the back (the hinge cover, the camera) also need their own "is that side in view" rule, or Safari draws them through the screen.
 - Along the fold only the face's own edge may meet the other half; anything darker under that edge shows as a line in Safari.
 - No Apple logo by default; the `logo` attribute is for people who may use one.
-- Releasing (GitHub, npm, a public URL) is Toli's call.
+- Publishing to npm is Toli's call.
